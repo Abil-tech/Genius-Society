@@ -1,0 +1,22 @@
+# Environment
+.env
+.env.local
+
+# Binary
+/tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+backend
+
+# Go
+vendor/
+*.test
+*.out
+
+# IDE
+.vscode/
+.idea/

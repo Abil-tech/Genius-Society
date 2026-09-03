@@ -2,6 +2,7 @@
 
 @theme {
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
 
   /* Brand palette diambil dari desain Figma Genius Society */
   --color-brand-navy: #0f2545;
@@ -11,6 +12,13 @@
   --color-brand-orange-light: #fff1de;
   --color-brand-bg: #f7f8fa;
   --color-brand-muted: #6b7280;
+  --color-brand-cream: #fdf8f2;
+  --color-status-success: #16a34a;
+  --color-status-success-bg: #f0fdf4;
+  --color-status-warning: #ea580c;
+  --color-status-warning-bg: #fff7ed;
+  --color-status-danger: #dc2626;
+  --color-status-danger-bg: #fef2f2;
 }
 
 html {

@@ -1,5 +1,5 @@
 import Button from './Button'
-import { heroStats } from '@/utils/landingContent'
+import { heroStats } from '../../utils/LandingContent'
 
 export default function Hero() {
   return (

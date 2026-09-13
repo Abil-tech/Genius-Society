@@ -11,7 +11,7 @@ import StatusTable from '../components/admin/StatusTable'
 import AdminFooter from '../components/admin/AdminFooter'
 import { mainStats, miniStats } from '../utils/dashboardContent'
 
-export default function AdminDashboardPage() {
+export default function SuperAdminDashboardPage() {
   const today = new Date().toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'long',

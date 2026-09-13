@@ -1,17 +1,39 @@
 import { useState } from 'react'
 import { KeyRound, ShieldAlert, ArrowUpRight } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import LoginInput from '../components/login/LoginInput'
 import CornerMark from '../components/login/CornerMark'
+import { loginAdmin, isApiError } from '../service/authService'
 
 export default function AdminLoginPage() {
+  const navigate = useNavigate()
   const [adminId, setAdminId] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // TODO: hubungkan ke POST /api/auth/login setelah backend siap
+    setError(null)
+    setLoading(true)
+    try {
+      const user = await loginAdmin({ adminId, password })
+      if (user.role === 'super_admin') {
+        navigate('/super-admin/dashboard', { replace: true })
+      } else if (user.role === 'admin') {
+        navigate('/admin/dashboard', { replace: true })
+      } else {
+        // Tidak seharusnya terjadi — backend sudah menolak role non-admin
+        // di endpoint /admin-login. Kalau ini muncul, ada bug di backend.
+        setError('Akun ini tidak memiliki akses admin.')
+      }
+    } catch (err) {
+      setError(isApiError(err) ? err.message : 'Login gagal.')
+    } finally {
+      setLoading(false)
+    }
   }
+
 
   return (
     <div className="grid min-h-screen bg-white lg:grid-cols-2">
@@ -95,6 +117,12 @@ export default function AdminLoginPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
 
+            {error && (
+              <p className="text-sm font-medium text-red-600" role="alert">
+                {error}
+              </p>
+            )}
+
             <div className="flex justify-end">
               <a
                 href="#"
@@ -106,10 +134,11 @@ export default function AdminLoginPage() {
 
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-navy py-3.5 font-mono text-sm font-bold uppercase tracking-widest text-white transition-colors hover:bg-brand-navy-light"
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-navy py-3.5 font-mono text-sm font-bold uppercase tracking-widest text-white transition-colors hover:bg-brand-navy-light disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Masuk sebagai Admin
-              <ArrowUpRight size={16} strokeWidth={2.5} />
+              {loading ? 'Memproses...' : 'Masuk sebagai Admin'}
+              {!loading && <ArrowUpRight size={16} strokeWidth={2.5} />}
             </button>
           </form>
 

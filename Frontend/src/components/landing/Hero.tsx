@@ -1,7 +1,10 @@
 import Button from './Button'
 import { heroStats } from '../../utils/LandingContent'
+import { useNavigate } from 'react-router-dom'
 
 export default function Hero() {
+  const navigate = useNavigate()
+
   return (
     <section className="px-6 pt-20 pb-16 text-center">
       <div className="mx-auto max-w-3xl">
@@ -22,7 +25,7 @@ export default function Hero() {
         </p>
 
         <div className="mt-8">
-          <Button>Mulai Belajar</Button>
+          <Button onClick={() => navigate('/login')}>Mulai Belajar</Button>
         </div>
       </div>
 

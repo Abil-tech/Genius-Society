@@ -3,16 +3,13 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
 
 // Config holds all environment-driven configuration for the backend.
-// Fields are grouped by concern. Only Mongo-related fields are validated
-// today; JWT/Cookie/R2 fields are declared now (matching .env.example)
-// so later steps (auth, R2) don't require touching this struct again,
-// but they are NOT validated here yet — validate them when that
-// feature is actually implemented, not before.
+// Fields are grouped by concern.
 type Config struct {
 	AppEnv string
 	Port   string
@@ -20,10 +17,12 @@ type Config struct {
 	MongoURI      string
 	MongoDatabase string
 
-	// Not yet implemented — populated for forward compatibility only.
-	JWTSecret    string
-	CookieDomain string
-	CORSOrigin   string
+	// Auth / cookie — validated below, required as of auth implementation.
+	JWTSecret      string
+	JWTExpiryHours int
+	CookieDomain   string
+	CookieSecure   bool
+	CORSOrigin     string
 }
 
 // LoadConfig reads environment variables (loading a local .env file first
@@ -32,16 +31,25 @@ type Config struct {
 func LoadConfig() (*Config, error) {
 	_ = godotenv.Load() // ignored: absent .env is expected in production
 
+	appEnv := getEnv("APP_ENV", "development")
+
+	jwtExpiryHours, err := strconv.Atoi(getEnv("JWT_EXPIRY_HOURS", "24"))
+	if err != nil || jwtExpiryHours <= 0 {
+		return nil, fmt.Errorf("JWT_EXPIRY_HOURS must be a positive integer")
+	}
+
 	cfg := &Config{
-		AppEnv: getEnv("APP_ENV", "development"),
+		AppEnv: appEnv,
 		Port:   getEnv("PORT", "8080"),
 
 		MongoURI:      os.Getenv("MONGODB_URI"),
 		MongoDatabase: os.Getenv("MONGODB_DATABASE"),
 
-		JWTSecret:    os.Getenv("JWT_SECRET"),
-		CookieDomain: os.Getenv("COOKIE_DOMAIN"),
-		CORSOrigin:   os.Getenv("CORS_ORIGIN"),
+		JWTSecret:      os.Getenv("JWT_SECRET"),
+		JWTExpiryHours: jwtExpiryHours,
+		CookieDomain:   os.Getenv("COOKIE_DOMAIN"),
+		CookieSecure:   appEnv == "production",
+		CORSOrigin:     os.Getenv("CORS_ORIGIN"),
 	}
 
 	if cfg.MongoURI == "" {
@@ -49,6 +57,12 @@ func LoadConfig() (*Config, error) {
 	}
 	if cfg.MongoDatabase == "" {
 		return nil, fmt.Errorf("MONGODB_DATABASE is required")
+	}
+	if cfg.JWTSecret == "" {
+		return nil, fmt.Errorf("JWT_SECRET is required")
+	}
+	if cfg.CORSOrigin == "" {
+		return nil, fmt.Errorf("CORS_ORIGIN is required")
 	}
 
 	return cfg, nil

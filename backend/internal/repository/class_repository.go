@@ -52,6 +52,26 @@ func (r *ClassRepository) FindByAcademicYear(ctx context.Context, academicYearID
 	return classes, nil
 }
 
+// FindByWalasAndYear mencari kelas yang wali kelasnya adalah teacherUserID
+// pada tahun ajaran tertentu. Mengembalikan ErrClassNotFound kalau guru
+// ini bukan wali kelas manapun tahun ini — itu kondisi NORMAL (kebanyakan
+// guru bukan walas), bukan error yang perlu ditampilkan ke pengguna.
+func (r *ClassRepository) FindByWalasAndYear(ctx context.Context, teacherUserID, academicYearID primitive.ObjectID) (*model.Class, error) {
+	var class model.Class
+	err := r.collection.FindOne(ctx, bson.M{
+		"walas_id":         teacherUserID,
+		"academic_year_id": academicYearID,
+		"is_active":        true,
+	}).Decode(&class)
+	if err == mongo.ErrNoDocuments {
+		return nil, ErrClassNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &class, nil
+}
+
 func (r *ClassRepository) Create(ctx context.Context, class *model.Class) error {
 	now := time.Now()
 	class.IsActive = true
@@ -130,6 +150,9 @@ func (r *ClassRepository) EnsureIndexes(ctx context.Context) error {
 		{
 			Keys:    bson.D{{Key: "academic_year_id", Value: 1}, {Key: "name", Value: 1}},
 			Options: options.Index().SetUnique(true),
+		},
+		{
+			Keys: bson.D{{Key: "walas_id", Value: 1}, {Key: "academic_year_id", Value: 1}},
 		},
 	})
 	return err

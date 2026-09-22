@@ -9,6 +9,7 @@ import (
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
 	"github.com/Abil-tech/Genius-Society/backend/internal/service"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var adminIDPattern = regexp.MustCompile(`^ADM-\d{6}$`)
@@ -81,12 +82,38 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.Success(gin.H{"message": "logged out"}))
 }
 
+// Me mengembalikan data user yang SEDANG login, di-query LANGSUNG dari
+// database (bukan cuma dari isi JWT) — supaya kalau ada perubahan data
+// user (nama, dsb) setelah token diterbitkan, /me selalu menampilkan
+// data terbaru, dan supaya user yang sudah dinonaktifkan otomatis
+// dianggap tidak punya sesi valid lagi (lihat AuthService.GetUserByID).
 func (h *AuthHandler) Me(c *gin.Context) {
 	claimsVal, _ := c.Get(middleware.UserContextKey)
 	claims := claimsVal.(*service.Claims)
+
+	userID, err := primitive.ObjectIDFromHex(claims.UserID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dto.Error("invalid session"))
+		return
+	}
+
+	user, err := h.authService.GetUserByID(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dto.Error("invalid session"))
+		return
+	}
+
+	// Bentuk response SENGAJA dibuat persis sama dengan issueSession
+	// (Login/LoginAdmin) — supaya frontend bisa pakai satu tipe AuthUser
+	// untuk keduanya, tidak perlu mapping berbeda tergantung endpoint mana
+	// yang dipanggil.
 	c.JSON(http.StatusOK, dto.Success(gin.H{
-		"userId": claims.UserID,
-		"role":   claims.Role,
+		"user": gin.H{
+			"id":    user.ID.Hex(),
+			"name":  user.Name,
+			"email": user.Email,
+			"role":  user.Role,
+		},
 	}))
 }
 

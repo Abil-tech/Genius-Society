@@ -20,6 +20,12 @@ type TeacherSubject struct {
 	TeacherID primitive.ObjectID `bson:"teacher_id" json:"teacherId"`
 	SubjectID primitive.ObjectID `bson:"subject_id" json:"subjectId"`
 
+	// IsPrimary: menandai mapel UTAMA guru ini (dipakai untuk tampilan
+	// singkat mis. kolom "role" di tabel Guru & Staf). Maksimal SATU
+	// dokumen boleh IsPrimary=true per TeacherID — ditegakkan lewat
+	// partial unique index di EnsureIndexes, bukan cuma di service layer.
+	IsPrimary bool `bson:"is_primary" json:"isPrimary"`
+
 	// IsActive: soft-delete flag.
 	IsActive bool `bson:"is_active" json:"isActive"`
 

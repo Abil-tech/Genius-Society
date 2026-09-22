@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { getMe } from "../service/authService";
+import { getMe } from "../services/authService";
 import type { Role } from "../types/auth";
 
 interface ProtectedRouteProps {

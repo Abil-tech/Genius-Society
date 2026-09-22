@@ -1,9 +1,32 @@
-import { useLocation, Link } from 'react-router-dom'
-import { ShieldCheck, Database, Settings, HelpCircle } from 'lucide-react'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
+import { ShieldCheck, Database, Settings, HelpCircle, LogOut } from 'lucide-react'
+import { useState } from 'react'
 import { sidebarNav } from '../../utils/dashboardContent'
+import { roleLabel } from '../../utils/roleLabels'
+import { useAuth } from '../../hooks/useAuth'
 
 export default function AdminSidebar() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const displayName = user?.name ?? 'Administrator'
+  const displayRole = user ? roleLabel[user.role] : 'Admin'
+  const initial = displayName.trim().charAt(0).toUpperCase() || 'A'
+
+  async function handleLogout() {
+    const confirmed = window.confirm('Yakin ingin keluar dari akun ini?')
+    if (!confirmed) return
+
+    setIsLoggingOut(true)
+    try {
+      await logout()
+      navigate('/admin/login', { replace: true })
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-brand-navy/5 bg-brand-cream px-4 py-5 lg:flex">
@@ -21,13 +44,15 @@ export default function AdminSidebar() {
 
       <div className="mt-6 flex items-center gap-3 rounded-xl border border-brand-navy/10 bg-white px-3 py-3">
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-navy font-mono text-sm font-bold text-white">
-          A
+          {initial}
         </span>
-        <div>
-          <p className="text-sm font-bold text-brand-navy">Administrator</p>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-bold text-brand-navy">
+            {displayName}
+          </p>
           <span className="inline-flex items-center gap-1 rounded-full bg-brand-orange-light px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-brand-orange">
             <ShieldCheck size={10} strokeWidth={2.5} />
-            Super Admin
+            {displayRole}
           </span>
         </div>
       </div>
@@ -74,6 +99,14 @@ export default function AdminSidebar() {
           <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-brand-navy/70 hover:bg-white hover:text-brand-navy">
             <HelpCircle size={16} strokeWidth={2} />
             Bantuan
+          </button>
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-status-danger hover:bg-status-danger-bg disabled:opacity-60"
+          >
+            <LogOut size={16} strokeWidth={2} />
+            {isLoggingOut ? 'Keluar...' : 'Logout'}
           </button>
         </div>
       </div>

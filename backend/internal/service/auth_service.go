@@ -6,6 +6,7 @@ import (
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
 	"github.com/Abil-tech/Genius-Society/backend/internal/repository"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -62,6 +63,23 @@ func (s *AuthService) LoginAdmin(ctx context.Context, adminID, password string) 
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return nil, ErrInvalidCredentials
+	}
+	return user, nil
+}
+
+// GetUserByID mengambil user berdasarkan _id — dipakai untuk MEMULIHKAN
+// sesi dari JWT (GET /api/auth/me), BUKAN untuk alur login/password.
+// Kalau user sudah tidak ada/nonaktif, dianggap sesi tidak valid
+// (ErrInvalidCredentials) — bukan error server, supaya handler bisa
+// merespons 401 dan frontend tahu harus anggap belum login, bukan
+// menampilkan pesan error teknis ke pengguna.
+func (s *AuthService) GetUserByID(ctx context.Context, userID primitive.ObjectID) (*model.User, error) {
+	user, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		if err == repository.ErrUserNotFound {
+			return nil, ErrInvalidCredentials
+		}
+		return nil, err
 	}
 	return user, nil
 }

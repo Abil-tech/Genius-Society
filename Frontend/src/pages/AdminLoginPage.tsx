@@ -3,7 +3,7 @@ import { KeyRound, ShieldAlert, ArrowUpRight } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import LoginInput from '../components/login/LoginInput'
 import CornerMark from '../components/login/CornerMark'
-import { loginAdmin, isApiError } from '../service/authService'
+import { loginAdmin, isApiError } from '../services/authService'
 
 export default function AdminLoginPage() {
   const navigate = useNavigate()

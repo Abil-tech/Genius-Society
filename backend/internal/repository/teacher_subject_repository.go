@@ -54,6 +54,53 @@ func (r *TeacherSubjectRepository) FindBySubject(ctx context.Context, subjectID 
 	return records, nil
 }
 
+// FindPrimaryByTeacher mengembalikan mapel UTAMA guru ini. Mengembalikan
+// ErrTeacherSubjectNotFound kalau guru belum punya mapel utama yang
+// ditandai (mis. baru saja ditambahkan kompetensinya, belum diset mana
+// yang utama) — pemanggil (service layer) harus punya fallback yang jelas
+// untuk kasus ini (mis. tampilkan mapel PERTAMA, atau tampilkan "-").
+func (r *TeacherSubjectRepository) FindPrimaryByTeacher(ctx context.Context, teacherID primitive.ObjectID) (*model.TeacherSubject, error) {
+	var ts model.TeacherSubject
+	err := r.collection.FindOne(ctx, bson.M{
+		"teacher_id": teacherID,
+		"is_primary": true,
+		"is_active":  true,
+	}).Decode(&ts)
+	if err == mongo.ErrNoDocuments {
+		return nil, ErrTeacherSubjectNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &ts, nil
+}
+
+// SetPrimarySubject menandai satu TeacherSubject sebagai mapel utama, dan
+// melepas status utama dari TeacherSubject lain milik guru yang sama.
+// Sama seperti AcademicYearRepository.SetCurrentAcademicYear — 2 operasi
+// terpisah, bukan transaksi atomik, dengan risiko race condition yang
+// sama (acceptable untuk operasi admin yang jarang & tidak konkuren).
+func (r *TeacherSubjectRepository) SetPrimarySubject(ctx context.Context, teacherID, subjectID primitive.ObjectID) error {
+	if _, err := r.collection.UpdateMany(ctx,
+		bson.M{"teacher_id": teacherID, "is_primary": true},
+		bson.M{"$set": bson.M{"is_primary": false}},
+	); err != nil {
+		return err
+	}
+
+	res, err := r.collection.UpdateOne(ctx,
+		bson.M{"teacher_id": teacherID, "subject_id": subjectID, "is_active": true},
+		bson.M{"$set": bson.M{"is_primary": true}},
+	)
+	if err != nil {
+		return err
+	}
+	if res.MatchedCount == 0 {
+		return ErrTeacherSubjectNotFound
+	}
+	return nil
+}
+
 func (r *TeacherSubjectRepository) Create(ctx context.Context, ts *model.TeacherSubject) error {
 	now := time.Now()
 	ts.IsActive = true
@@ -82,13 +129,25 @@ func (r *TeacherSubjectRepository) SoftDelete(ctx context.Context, id primitive.
 	return nil
 }
 
-// EnsureIndexes: (teacher_id, subject_id) unique — tidak boleh ada dua
-// dokumen kompetensi yang sama untuk kombinasi guru+mapel yang sama.
+// EnsureIndexes:
+//   - (teacher_id, subject_id) unique — tidak boleh ada dua dokumen
+//     kompetensi yang sama untuk kombinasi guru+mapel yang sama.
+//   - (teacher_id) unique DENGAN partial filter is_primary=true — MongoDB
+//     hanya menegakkan unique di antara dokumen yang match partial filter,
+//     jadi ini efektif berarti "maksimal satu is_primary=true per
+//     teacher_id", TANPA mengganggu banyak dokumen is_primary=false milik
+//     guru yang sama.
 func (r *TeacherSubjectRepository) EnsureIndexes(ctx context.Context) error {
 	_, err := r.collection.Indexes().CreateMany(ctx, []mongo.IndexModel{
 		{
 			Keys:    bson.D{{Key: "teacher_id", Value: 1}, {Key: "subject_id", Value: 1}},
 			Options: options.Index().SetUnique(true),
+		},
+		{
+			Keys: bson.D{{Key: "teacher_id", Value: 1}},
+			Options: options.Index().
+				SetUnique(true).
+				SetPartialFilterExpression(bson.M{"is_primary": true}),
 		},
 	})
 	return err

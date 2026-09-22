@@ -45,6 +45,22 @@ func (r *CounterRepository) nextSequence(ctx context.Context, key string) (int64
 	return result.Seq, nil
 }
 
+// EnsureMinimum menjamin seq untuk key ini MINIMAL sebesar minValue, TANPA
+// PERNAH menurunkan nilai yang sudah ada — aman dipanggil berkali-kali
+// (idempotent). Dipakai untuk menyinkronkan counter dengan ID yang sudah
+// dibuat manual/hardcoded SEBELUM counter ini pernah dipakai (mis. dev
+// seed Super Admin "ADM-000001" yang ditulis langsung ke database, tidak
+// lewat NextUsername) — supaya panggilan NextUsername berikutnya tidak
+// menghasilkan ID yang bentrok dengan yang sudah ada.
+func (r *CounterRepository) EnsureMinimum(ctx context.Context, key string, minValue int64) error {
+	_, err := r.collection.UpdateOne(ctx,
+		bson.M{"_id": key},
+		bson.M{"$max": bson.M{"seq": minValue}},
+		options.Update().SetUpsert(true),
+	)
+	return err
+}
+
 // NextUsername mengembalikan username berikutnya yang sudah diformat sesuai
 // key-nya (padding digit berbeda per role — lihat komentar di model.Counter).
 // Ini SATU-SATUNYA tempat yang boleh menentukan lebar padding, supaya tidak

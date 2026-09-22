@@ -1,5 +1,5 @@
 import api, { isApiError } from "./api";
-import type { AuthUser, LoginPayload, AdminLoginPayload, Role } from "../types/auth";
+import type { AuthUser, LoginPayload, AdminLoginPayload } from "../types/auth";
 
 interface ApiSuccess<T> {
   success: true;
@@ -26,11 +26,14 @@ export async function logout(): Promise<void> {
   await api.post("/api/auth/logout");
 }
 
-export async function getMe(): Promise<{ userId: string; role: Role }> {
-  const { data } = await api.get<ApiSuccess<{ userId: string; role: Role }>>(
+// getMe: dipakai untuk memulihkan sesi saat halaman di-refresh. Bentuk
+// response backend SEKARANG sama persis dengan login()/loginAdmin() —
+// { user: AuthUser } — bukan lagi { userId, role } yang tidak lengkap.
+export async function getMe(): Promise<AuthUser> {
+  const { data } = await api.get<ApiSuccess<{ user: AuthUser }>>(
     "/api/auth/me"
   );
-  return data.data;
+  return data.data.user;
 }
 
 export { isApiError };

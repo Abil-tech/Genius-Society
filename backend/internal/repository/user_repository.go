@@ -7,6 +7,7 @@ import (
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -70,7 +71,7 @@ func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*
 // murid). Pemanggil WAJIB memvalidasi bahwa role pelaku perubahan adalah
 // admin/super_admin SEBELUM memanggil method ini — repository tidak tahu
 // dan tidak mengecek siapa yang memanggil.
-func (r *UserRepository) UpdateUsername(ctx context.Context, userID interface{}, newUsername string) error {
+func (r *UserRepository) UpdateUsername(ctx context.Context, userID primitive.ObjectID, newUsername string) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": userID, "is_active": true},
 		bson.M{"$set": bson.M{"username": newUsername, "updatedAt": time.Now()}},
@@ -82,6 +83,24 @@ func (r *UserRepository) UpdateUsername(ctx context.Context, userID interface{},
 		return ErrUserNotFound
 	}
 	return nil
+}
+
+// FindByRoles mengambil SEMUA user dengan salah satu role yang diminta —
+// SENGAJA TIDAK filter is_active, karena dipakai halaman yang justru perlu
+// menampilkan status aktif/nonaktif (mis. halaman Guru & Staf). Kalau
+// butuh versi yang hanya aktif, filter di sisi pemanggil (service layer).
+func (r *UserRepository) FindByRoles(ctx context.Context, roles []model.Role) ([]model.User, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{"role": bson.M{"$in": roles}})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var users []model.User
+	if err := cursor.All(ctx, &users); err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 // EnsureIndexes: email unique untuk semua user; admin_id unique+sparse
@@ -104,6 +123,41 @@ func (r *UserRepository) EnsureIndexes(ctx context.Context) error {
 		},
 	})
 	return err
+}
+
+// FindByID mengambil user berdasarkan _id, HANYA yang masih aktif —
+// dipakai untuk memulihkan sesi dari JWT (GET /api/auth/me). Kalau user
+// ini sudah dinonaktifkan SETELAH token diterbitkan, method ini akan
+// menganggapnya ErrUserNotFound, supaya sesi lama tidak bisa dipulihkan
+// dengan data user yang sudah tidak berlaku lagi.
+func (r *UserRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.User, error) {
+	var user model.User
+	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&user)
+	if err == mongo.ErrNoDocuments {
+		return nil, ErrUserNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// Create menyisipkan user baru APA PUN rolenya. Pemanggil (service layer)
+// WAJIB sudah mengisi Role, dan salah satu dari AdminID (untuk
+// admin/super_admin) atau Username (untuk role lain) SEBELUM memanggil
+// ini — repository tidak melakukan validasi kelengkapan field per role.
+func (r *UserRepository) Create(ctx context.Context, user *model.User) error {
+	now := time.Now()
+	user.IsActive = true
+	user.CreatedAt = now
+	user.UpdatedAt = now
+
+	res, err := r.collection.InsertOne(ctx, user)
+	if err != nil {
+		return err
+	}
+	user.ID = res.InsertedID.(primitive.ObjectID)
+	return nil
 }
 
 // EnsureDevSeed membuat satu Super Admin dev jika collection users kosong.

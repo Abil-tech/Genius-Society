@@ -40,6 +40,7 @@ export interface UserSummaryItem {
 export interface QuickAction {
   icon: LucideIcon
   label: string
+  onClick?: () => void
 }
 
 export interface SystemNotification {

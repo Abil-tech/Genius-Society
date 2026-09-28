@@ -20,3 +20,5 @@ vendor/
 # IDE
 .vscode/
 .idea/
+
+*.md

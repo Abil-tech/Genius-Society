@@ -22,6 +22,32 @@ func NewProjectRepository(db *mongo.Database) *ProjectRepository {
 	return &ProjectRepository{collection: db.Collection("projects")}
 }
 
+// CountActive menghitung projek yang belum lewat deadline — dipakai
+// kartu "Proyek Aktif".
+func (r *ProjectRepository) CountActive(ctx context.Context, now time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"deadline":  bson.M{"$gte": now},
+	})
+}
+
+// CountDueWithin menghitung projek dengan deadline di antara now dan
+// until — dipakai statusRows "Mendekati Deadline".
+func (r *ProjectRepository) CountDueWithin(ctx context.Context, now, until time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"deadline":  bson.M{"$gte": now, "$lte": until},
+	})
+}
+
+// CountActiveByDeadline: jumlah projek yang belum lewat deadline.
+func (r *ProjectRepository) CountActiveByDeadline(ctx context.Context, now time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"deadline":  bson.M{"$gte": now},
+	})
+}
+
 func (r *ProjectRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.Project, error) {
 	var p model.Project
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&p)

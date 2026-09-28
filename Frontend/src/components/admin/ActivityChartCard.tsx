@@ -7,9 +7,16 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts'
-import { activityChart } from '../../utils/dashboardContent'
+import { activityChart as fallbackData } from '../../utils/dashboardContent'
+import type { ActivityPoint } from '../../types/Dashboard'
 
-export default function ActivityChartCard() {
+interface ActivityChartCardProps {
+  data?: ActivityPoint[]
+}
+
+export default function ActivityChartCard({ data = fallbackData }: ActivityChartCardProps) {
+  const chartData = data && data.length > 0 ? data : fallbackData
+
   return (
     <div className="rounded-2xl border border-brand-navy/5 bg-white p-5">
       <div className="flex items-center justify-between">
@@ -33,7 +40,7 @@ export default function ActivityChartCard() {
 
       <div className="mt-3 h-56 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={activityChart} margin={{ left: -20, right: 8 }}>
+          <AreaChart data={chartData} margin={{ left: -20, right: 8 }}>
             <defs>
               <linearGradient id="activityFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#F7941D" stopOpacity={0.35} />
@@ -72,7 +79,7 @@ export default function ActivityChartCard() {
       </div>
 
       <div className="mt-3 grid grid-cols-7 gap-1.5 border-t border-brand-navy/5 pt-3">
-        {activityChart.map((point) => (
+        {chartData.map((point) => (
           <div
             key={point.day}
             className="rounded-lg bg-brand-bg py-1.5 text-center"

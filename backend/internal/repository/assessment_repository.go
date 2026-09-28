@@ -21,6 +21,44 @@ func NewAssessmentRepository(db *mongo.Database) *AssessmentRepository {
 	return &AssessmentRepository{collection: db.Collection("assessments")}
 }
 
+// CountActive menghitung assessment yang SEDANG BERJALAN (sekarang ada di
+// antara start_date-end_date) — dipakai kartu "Assessment Aktif".
+func (r *AssessmentRepository) CountActive(ctx context.Context, now time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active":  true,
+		"start_date": bson.M{"$lte": now},
+		"end_date":   bson.M{"$gte": now},
+	})
+}
+
+// CountDueWithin menghitung assessment dengan end_date di antara now dan
+// until — dipakai statusRows "Mendekati Deadline".
+func (r *AssessmentRepository) CountDueWithin(ctx context.Context, now, until time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"end_date":  bson.M{"$gte": now, "$lte": until},
+	})
+}
+
+// CountActiveByEndDate: jumlah assessment yang jendela pengerjaannya belum
+// tutup (end_date >= now). "Aktif" di sini TIDAK mengecek StartDate — jadi
+// termasuk juga assessment yang belum dibuka tapi sudah dijadwalkan.
+func (r *AssessmentRepository) CountActiveByEndDate(ctx context.Context, now time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"end_date":  bson.M{"$gte": now},
+	})
+}
+
+// CountEndDateWithin: jumlah assessment dengan end_date jatuh di antara
+// from dan to (dipakai untuk "Mendekati Deadline < 24 jam" di statusRows).
+func (r *AssessmentRepository) CountEndDateWithin(ctx context.Context, from, to time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"end_date":  bson.M{"$gte": from, "$lte": to},
+	})
+}
+
 func (r *AssessmentRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.Assessment, error) {
 	var a model.Assessment
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&a)

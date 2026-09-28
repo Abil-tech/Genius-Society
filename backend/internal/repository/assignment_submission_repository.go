@@ -25,6 +25,42 @@ func NewAssignmentSubmissionRepository(db *mongo.Database) *AssignmentSubmission
 	return &AssignmentSubmissionRepository{collection: db.Collection("assignment_submissions")}
 }
 
+// CountGraded menghitung submission yang SUDAH dinilai (Score != nil) —
+// bagian dari statusRows "Selesai Dinilai / Terverifikasi".
+func (r *AssignmentSubmissionRepository) CountGraded(ctx context.Context) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"score":     bson.M{"$exists": true},
+	})
+}
+
+// CountLateUngraded: jumlah submission yang telat DAN belum dinilai —
+// dipakai untuk "Terlambat / Belum Dinilai" di statusRows.
+func (r *AssignmentSubmissionRepository) CountLateUngraded(ctx context.Context) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"is_late":   true,
+		"score":     bson.M{"$exists": false},
+	})
+}
+
+// FindRecent: N submission terbaru (berdasarkan submitted_at), dipakai untuk
+// feed activityLog on-the-fly di dashboard Admin.
+func (r *AssignmentSubmissionRepository) FindRecent(ctx context.Context, limit int64) ([]model.AssignmentSubmission, error) {
+	opts := options.Find().SetSort(bson.D{{Key: "submitted_at", Value: -1}}).SetLimit(limit)
+	cursor, err := r.collection.Find(ctx, bson.M{"is_active": true}, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var submissions []model.AssignmentSubmission
+	if err := cursor.All(ctx, &submissions); err != nil {
+		return nil, err
+	}
+	return submissions, nil
+}
+
 func (r *AssignmentSubmissionRepository) FindByAssignmentAndStudent(ctx context.Context, assignmentID, studentID primitive.ObjectID) (*model.AssignmentSubmission, error) {
 	var s model.AssignmentSubmission
 	err := r.collection.FindOne(ctx, bson.M{

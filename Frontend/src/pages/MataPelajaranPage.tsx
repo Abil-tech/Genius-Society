@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react'
 import AdminLayout from '../layouts/Adminlayout'
 import AdminPageHeader from '../components/admin/AdminPageHeader'
 import StatCard from '../components/admin/StatCard'
-import EmptyState from '../components/admin/EmprtyState'
+import EmptyState from '../components/admin/EmptyState'
 import ErrorState from '../components/admin/ErrorState'
 import TableSkeleton from '../components/admin/TableSkeleton'
 import Toast from '../components/admin/Toast'
@@ -54,13 +54,29 @@ export default function MataPelajaranPage() {
   }
 
   useEffect(() => {
-    // isLoading sudah true sejak initial state, jadi effect ini cukup
-    // menjalankan fetch-nya saja tanpa setState sinkron di awal body.
-    const timer = setTimeout(() => {
-      setSubjects(subjectList)
-      setIsLoading(false)
-    }, 500)
-    return () => clearTimeout(timer)
+    setIsLoading(true)
+    setIsError(false)
+    fetch('http://localhost:8080/api/admin/subjects', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data && data.data.subjects) {
+          setSubjects(data.data.subjects)
+        } else {
+          setSubjects(subjectList) // fallback
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch subjects", err)
+        setIsError(true)
+        setSubjects(subjectList)
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [])
 
   const filtered = useMemo(() => {

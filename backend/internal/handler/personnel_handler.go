@@ -36,3 +36,43 @@ func (h *PersonnelHandler) GetPersonnel(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, dto.Success(data))
 }
+
+func (h *PersonnelHandler) CreatePersonnel(c *gin.Context) {
+	var req dto.CreatePersonnelRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.Error("Data tidak valid: "+err.Error()))
+		return
+	}
+
+	res, err := h.service.CreatePersonnel(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.Error("Gagal menambahkan guru/staf: "+err.Error()))
+		return
+	}
+	c.JSON(http.StatusCreated, dto.Success(res))
+}
+
+func (h *PersonnelHandler) UpdatePersonnel(c *gin.Context) {
+	id := c.Param("id")
+	var req dto.UpdatePersonnelRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.Error("Data tidak valid: "+err.Error()))
+		return
+	}
+
+	res, err := h.service.UpdatePersonnel(c.Request.Context(), id, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.Error("Gagal memperbarui guru/staf: "+err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, dto.Success(res))
+}
+
+func (h *PersonnelHandler) DeletePersonnel(c *gin.Context) {
+	id := c.Param("id")
+	if err := h.service.DeletePersonnel(c.Request.Context(), id); err != nil {
+		c.JSON(http.StatusInternalServerError, dto.Error("Gagal menghapus guru/staf: "+err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, dto.Success(gin.H{"message": "Berhasil menghapus guru/staf"}))
+}

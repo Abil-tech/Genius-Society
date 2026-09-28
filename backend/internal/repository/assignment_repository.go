@@ -22,6 +22,43 @@ func NewAssignmentRepository(db *mongo.Database) *AssignmentRepository {
 	return &AssignmentRepository{collection: db.Collection("assignments")}
 }
 
+// CountActive menghitung tugas yang belum lewat deadline — dipakai kartu
+// "Tugas Aktif".
+func (r *AssignmentRepository) CountActive(ctx context.Context, now time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"deadline":  bson.M{"$gte": now},
+	})
+}
+
+// CountDueWithin menghitung tugas dengan deadline di antara now dan
+// until — dipakai statusRows "Mendekati Deadline".
+func (r *AssignmentRepository) CountDueWithin(ctx context.Context, now, until time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"deadline":  bson.M{"$gte": now, "$lte": until},
+	})
+}
+
+// CountActiveByDeadline: jumlah tugas yang belum lewat deadline (masih
+// bisa dikerjakan siswa). "Aktif" di sini = belum di-soft-delete DAN
+// deadline >= now.
+func (r *AssignmentRepository) CountActiveByDeadline(ctx context.Context, now time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"deadline":  bson.M{"$gte": now},
+	})
+}
+
+// CountDeadlineWithin: jumlah tugas dengan deadline jatuh di antara from
+// dan to (dipakai untuk "Mendekati Deadline < 24 jam" di statusRows).
+func (r *AssignmentRepository) CountDeadlineWithin(ctx context.Context, from, to time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active": true,
+		"deadline":  bson.M{"$gte": from, "$lte": to},
+	})
+}
+
 func (r *AssignmentRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.Assignment, error) {
 	var a model.Assignment
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&a)
@@ -34,10 +71,24 @@ func (r *AssignmentRepository) FindByID(ctx context.Context, id primitive.Object
 	return &a, nil
 }
 
+func (r *AssignmentRepository) FindAll(ctx context.Context) ([]model.Assignment, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{"is_active": true})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var assignments []model.Assignment
+	if err := cursor.All(ctx, &assignments); err != nil {
+		return nil, err
+	}
+	return assignments, nil
+}
+
 // FindByClass: semua tugas untuk satu kelas (dipakai tampilan murid).
 func (r *AssignmentRepository) FindByClass(ctx context.Context, classID primitive.ObjectID) ([]model.Assignment, error) {
 	opts := options.Find().SetSort(bson.D{{Key: "deadline", Value: 1}})
-	cursor, err := r.collection.Find(ctx, bson.M{"class_id": classID, "is_active": true}, opts)
+	cursor, err := r.collection.Find(ctx, bson.M{"class_ids": classID, "is_active": true}, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -113,11 +164,11 @@ func (r *AssignmentRepository) SoftDelete(ctx context.Context, id primitive.Obje
 	return nil
 }
 
-// EnsureIndexes: index pada class_id dan teacher_id untuk mempercepat query
+// EnsureIndexes: index pada class_ids dan teacher_id untuk mempercepat query
 // tampilan murid & guru.
 func (r *AssignmentRepository) EnsureIndexes(ctx context.Context) error {
 	_, err := r.collection.Indexes().CreateMany(ctx, []mongo.IndexModel{
-		{Keys: bson.D{{Key: "class_id", Value: 1}}},
+		{Keys: bson.D{{Key: "class_ids", Value: 1}}},
 		{Keys: bson.D{{Key: "teacher_id", Value: 1}}},
 	})
 	return err

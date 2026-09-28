@@ -10,6 +10,11 @@ import GuruStafPage from './pages/GuruStafPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 import MataPelajaranPage from './pages/MataPelajaranPage'
 import KelasKurikulumPage from './pages/KelasKurikulumPage'
+import SiswaPage from './pages/SiswaPages'
+import ManagementTugasPage from './pages/ManagementTugasPage'
+import GuruDashboardPage from './pages/Guru/GuruDashboard'
+import JadwalMengajarPage from './pages/Guru/JadwalMengajarPage'
+import GuruAssignmentTugas from './pages/Guru/GuruAssignmentTugas'
 
 // Komponen terpisah karena useNavigate() HARUS dipanggil oleh komponen
 // yang berada DI DALAM <BrowserRouter>, bukan yang me-render BrowserRouter
@@ -44,10 +49,10 @@ function App() {
 
           <Route
             path="/super-admin/dashboard"
-            element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
-                <SuperAdminDashboardPage />
-              </ProtectedRoute>
+            element={<SuperAdminDashboardPage />
+              // <ProtectedRoute allowedRoles={['super_admin']}>
+              //   <SuperAdminDashboardPage />
+              // </ProtectedRoute>
             }
           />
 
@@ -78,7 +83,7 @@ function App() {
             }
           />
 
-          
+
           <Route
             path="/admin/kelas-kurikulum"
             element={
@@ -87,6 +92,55 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+
+          <Route
+            path="/admin/siswa"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <SiswaPage />
+              </ProtectedRoute>
+            }
+          />
+
+
+          <Route
+            path="/admin/tugas"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManagementTugasPage />
+              </ProtectedRoute>
+            }
+          />
+          
+          
+          <Route
+            path="/guru/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['guru']}>
+                <GuruDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+           <Route
+            path="/guru/jadwal"
+            element={
+              <ProtectedRoute allowedRoles={['guru']}>
+                <JadwalMengajarPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/guru/materi-tugas"
+            element={
+              <ProtectedRoute allowedRoles={['guru']}>
+                <GuruAssignmentTugas />
+              </ProtectedRoute>
+            }
+          />
+          
         </Routes>
       </AuthProvider>
     </BrowserRouter>

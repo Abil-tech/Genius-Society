@@ -52,6 +52,21 @@ func (r *ClassRepository) FindByAcademicYear(ctx context.Context, academicYearID
 	return classes, nil
 }
 
+// FindAll mengembalikan semua kelas aktif di database.
+func (r *ClassRepository) FindAll(ctx context.Context) ([]model.Class, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{"is_active": true})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var classes []model.Class
+	if err := cursor.All(ctx, &classes); err != nil {
+		return nil, err
+	}
+	return classes, nil
+}
+
 // FindByWalasAndYear mencari kelas yang wali kelasnya adalah teacherUserID
 // pada tahun ajaran tertentu. Mengembalikan ErrClassNotFound kalau guru
 // ini bukan wali kelas manapun tahun ini — itu kondisi NORMAL (kebanyakan

@@ -22,6 +22,10 @@ func NewUserRepository(db *mongo.Database) *UserRepository {
 	return &UserRepository{collection: db.Collection("users")}
 }
 
+func (r *UserRepository) Collection() *mongo.Collection {
+	return r.collection
+}
+
 // FindByEmail dipakai untuk pencarian umum (mis. cek duplikat saat create),
 // BUKAN untuk login non-admin lagi (login non-admin sekarang pakai
 // FindByUsername). Difilter is_active=true — user yang sudah dinonaktifkan
@@ -85,6 +89,22 @@ func (r *UserRepository) UpdateUsername(ctx context.Context, userID primitive.Ob
 	return nil
 }
 
+// FindAll mengambil SEMUA user lintas role, TERMASUK yang nonaktif —
+// dipakai untuk agregasi ringkasan (mis. userSummary di dashboard Admin).
+func (r *UserRepository) FindAll(ctx context.Context) ([]model.User, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var users []model.User
+	if err := cursor.All(ctx, &users); err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 // FindByRoles mengambil SEMUA user dengan salah satu role yang diminta —
 // SENGAJA TIDAK filter is_active, karena dipakai halaman yang justru perlu
 // menampilkan status aktif/nonaktif (mis. halaman Guru & Staf). Kalau
@@ -101,6 +121,35 @@ func (r *UserRepository) FindByRoles(ctx context.Context, roles []model.Role) ([
 		return nil, err
 	}
 	return users, nil
+}
+
+// CountByRole menghitung jumlah user dengan role tertentu. onlyActive=true
+// untuk hanya menghitung yang is_active=true.
+func (r *UserRepository) CountByRole(ctx context.Context, role model.Role, onlyActive bool) (int64, error) {
+	filter := bson.M{"role": role}
+	if onlyActive {
+		filter["is_active"] = true
+	}
+	return r.collection.CountDocuments(ctx, filter)
+}
+
+// CountByRoleSince menghitung user dengan role tertentu yang dibuat sejak
+// waktu "since" — dipakai untuk badge trend "+X bulan ini" di dashboard.
+func (r *UserRepository) CountByRoleSince(ctx context.Context, role model.Role, since time.Time) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"role":      role,
+		"createdAt": bson.M{"$gte": since},
+	})
+}
+
+// CountInactiveTotal menghitung SEMUA user nonaktif, lintas role.
+func (r *UserRepository) CountInactiveTotal(ctx context.Context) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{"is_active": false})
+}
+
+// CountTotal menghitung SEMUA user, lintas role, aktif maupun tidak.
+func (r *UserRepository) CountTotal(ctx context.Context) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{})
 }
 
 // EnsureIndexes: email unique untuk semua user; admin_id unique+sparse

@@ -36,8 +36,7 @@ export const sidebarNav: NavItem[] = [
   { icon: UserCog, label: 'Guru & Staf', href: '/admin/staf' },
   { icon: School, label: 'Kelas & Kurikulum', href: '/admin/kelas-kurikulum' },
   { icon: BookOpen, label: 'Mata Pelajaran', href: '/admin/mapel' },
-  { icon: ClipboardCheck, label: 'Tugas & Assessment', href: '/admin/tugas-assessment' },
-  { icon: FileBarChart, label: 'Laporan & Log', href: '/admin/laporan' },
+  { icon: ClipboardCheck, label: 'Management Tugas', href: '/admin/tugas' },
 ]
 
 export const mainStats: StatCard[] = [
@@ -56,7 +55,6 @@ export const mainStats: StatCard[] = [
     trend: '+3 guru bulan ini',
     trendTone: 'positive',
     icon: UsersRound,
-     highlighted: true,
   },
   {
     code: 'MODULE_03',
@@ -76,13 +74,12 @@ export const mainStats: StatCard[] = [
     trendTone: 'neutral',
     badge: 'Kurikulum',
     icon: BookMarked,
-     highlighted: true,
   },
 ]
 
 export const miniStats: MiniStatCard[] = [
-  { label: 'Materi Aktif', value: '124', badge: 'Materi', icon: FileText,  highlighted: true,},
-  { label: 'Tugas Aktif', value: '86', badge: 'Terjadwal', icon: ListChecks,  highlighted: true,},
+  { label: 'Materi Aktif', value: '124', badge: 'Materi', icon: FileText },
+  { label: 'Tugas Aktif', value: '86', badge: 'Terjadwal', icon: ListChecks },
   {
     label: 'Assessment Aktif',
     value: '42',
@@ -90,7 +87,7 @@ export const miniStats: MiniStatCard[] = [
     icon: FlaskConical,
     highlighted: true,
   },
-  { label: 'Proyek Aktif', value: '18', badge: 'PJ / Tim', icon: FolderKanban,  highlighted: true, },
+  { label: 'Proyek Aktif', value: '18', badge: 'PJ / Tim', icon: FolderKanban },
 ]
 
 export const activityChart: ActivityPoint[] = [

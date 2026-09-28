@@ -40,6 +40,15 @@ func main() {
 	teacherRepo := repository.NewTeacherRepository(mongoClient.Database)
 	teacherSubjectRepo := repository.NewTeacherSubjectRepository(mongoClient.Database)
 	teacherClassRepo := repository.NewTeacherClassRepository(mongoClient.Database)
+	studentRepo := repository.NewStudentRepository(mongoClient.Database)
+	materialRepo := repository.NewMaterialRepository(mongoClient.Database)
+	assignmentRepo := repository.NewAssignmentRepository(mongoClient.Database)
+	assignmentSubmissionRepo := repository.NewAssignmentSubmissionRepository(mongoClient.Database)
+	assessmentRepo := repository.NewAssessmentRepository(mongoClient.Database)
+	assessmentAttemptRepo := repository.NewAssessmentAttemptRepository(mongoClient.Database)
+	projectRepo := repository.NewProjectRepository(mongoClient.Database)
+	loginEventRepo := repository.NewLoginEventRepository(mongoClient.Database)
+	systemEventRepo := repository.NewSystemEventRepository(mongoClient.Database)
 
 	// Seed default landing content ONCE at startup if collection is empty.
 	if err := landingRepo.EnsureSeeded(context.Background(), repository.DefaultLandingContent()); err != nil {
@@ -88,12 +97,56 @@ func main() {
 	// --- Service layer ---
 	authService := service.NewAuthService(userRepo)
 	jwtService := service.NewJWTService(cfg.JWTSecret, cfg.JWTExpiryHours)
+	dashboardService := service.NewDashboardService(
+		userRepo,
+		studentRepo,
+		teacherRepo,
+		classRepo,
+		subjectRepo,
+		academicYearRepo,
+		materialRepo,
+		assignmentRepo,
+		assignmentSubmissionRepo,
+		assessmentRepo,
+		assessmentAttemptRepo,
+		projectRepo,
+		loginEventRepo,
+		systemEventRepo,
+	)
+	personnelService := service.NewPersonnelService(
+		userRepo,
+		teacherRepo,
+		teacherSubjectRepo,
+		teacherClassRepo,
+		classRepo,
+		subjectRepo,
+		academicYearRepo,
+	)
+	classStudentRepo := repository.NewClassStudentRepository(mongoClient.Database)
+	studentService := service.NewStudentService(
+		userRepo,
+		studentRepo,
+		classStudentRepo,
+		classRepo,
+		academicYearRepo,
+	)
+	academicService := service.NewAcademicService(
+		classRepo,
+		subjectRepo,
+		assignmentRepo,
+		userRepo,
+		academicYearRepo,
+	)
 
 	// --- Handler layer ---
 	publicLandingHandler := handler.NewPublicLandingHandler(landingRepo)
 	authHandler := handler.NewAuthHandler(authService, jwtService, cfg.CookieDomain, cfg.CookieSecure)
-	adminHandler := handler.NewAdminHandler()
+	adminHandler := handler.NewAdminHandler(dashboardService)
 	superAdminHandler := handler.NewSuperAdminHandler()
+	personnelHandler := handler.NewPersonnelHandler(personnelService)
+	studentHandler := handler.NewStudentHandler(studentService)
+	academicHandler := handler.NewAcademicHandler(academicService)
+	guruHandler := handler.NewGuruHandler(dashboardService)
 
 	// --- Router ---
 	router := gin.Default()
@@ -131,6 +184,27 @@ func main() {
 	)
 	{
 		admin.GET("/dashboard", adminHandler.GetDashboard)
+		admin.GET("/personnel", personnelHandler.GetPersonnel)
+		admin.POST("/personnel", personnelHandler.CreatePersonnel)
+		admin.PUT("/personnel/:id", personnelHandler.UpdatePersonnel)
+		admin.DELETE("/personnel/:id", personnelHandler.DeletePersonnel)
+		admin.GET("/students", studentHandler.GetStudents)
+		admin.POST("/students", studentHandler.CreateStudent)
+		admin.PUT("/students/:id", studentHandler.UpdateStudent)
+		admin.DELETE("/students/:id", studentHandler.DeleteStudent)
+		admin.GET("/classes", academicHandler.GetClasses)
+		admin.GET("/subjects", academicHandler.GetSubjects)
+		admin.GET("/assignments", academicHandler.GetAssignments)
+	}
+
+	// GURU routes — proteksi token + role guru.
+	guru := router.Group("/api/guru")
+	guru.Use(
+		middleware.AuthRequired(jwtService),
+		middleware.RequireRole(model.RoleGuru),
+	)
+	{
+		guru.GET("/dashboard", guruHandler.GetDashboard)
 	}
 
 	// SUPER ADMIN routes — khusus role SuperAdmin, TIDAK termasuk Admin.

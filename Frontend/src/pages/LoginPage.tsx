@@ -1,15 +1,39 @@
 import { useState } from 'react'
 import { UserRound, Lock, ArrowUpRight } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 import LoginInput from '../components/login/LoginInput'
 import CornerMark from '../components/login/CornerMark'
+import { useAuth } from '../hooks/useAuth'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function handleSubmit(e: React.FormEvent) {
+  const { login } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // TODO: hubungkan ke POST /api/auth/login setelah backend siap
+    setErrorMessage('')
+
+    if (!username.trim() || !password) {
+      setErrorMessage('Username dan password wajib diisi.')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await login({ username, password })
+      navigate('/guru/dashboard', { replace: true })
+    } catch (err: any) {
+      setErrorMessage(
+        err?.message || 'Gagal login. Periksa username dan password Anda.'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -43,12 +67,18 @@ export default function LoginPage() {
 
           <div className="my-6 h-px w-full bg-brand-navy/10" />
 
+          {errorMessage && (
+            <div className="mb-4 rounded-xl border border-status-danger/20 bg-status-danger-bg p-3 text-xs font-medium text-status-danger">
+              {errorMessage}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <LoginInput
               id="username"
               label="Username"
               icon={UserRound}
-              placeholder="ENG-000000"
+              placeholder="GS-GRU-001"
               autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -76,12 +106,23 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-orange py-3.5 font-mono text-sm font-bold uppercase tracking-widest text-white transition-colors hover:bg-brand-orange-dark"
+              disabled={isSubmitting}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-orange py-3.5 font-mono text-sm font-bold uppercase tracking-widest text-white transition-colors hover:bg-brand-orange-dark disabled:opacity-60"
             >
-              Login
+              {isSubmitting ? 'Memproses...' : 'Login'}
               <ArrowUpRight size={16} strokeWidth={2.5} />
             </button>
           </form>
+
+          <p className="mt-6 text-center text-xs text-brand-muted">
+            Bukan Siswa / Guru?{' '}
+            <Link
+              to="/admin/login"
+              className="font-semibold text-brand-navy hover:underline"
+            >
+              Masuk sebagai Admin
+            </Link>
+          </p>
         </div>
       </div>
 

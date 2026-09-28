@@ -22,6 +22,46 @@ func NewAssessmentAttemptRepository(db *mongo.Database) *AssessmentAttemptReposi
 	return &AssessmentAttemptRepository{collection: db.Collection("assessment_attempts")}
 }
 
+// CountFullyGraded menghitung attempt yang sudah selesai dinilai penuh —
+// bagian dari statusRows "Selesai Dinilai / Terverifikasi".
+func (r *AssessmentAttemptRepository) CountFullyGraded(ctx context.Context) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active":       true,
+		"is_fully_graded": true,
+	})
+}
+
+// CountSubmittedNotGraded: jumlah attempt yang sudah disubmit tapi BELUM
+// selesai dinilai (masih ada essay pending) — dipakai untuk "Terlambat /
+// Belum Dinilai" di statusRows.
+func (r *AssessmentAttemptRepository) CountSubmittedNotGraded(ctx context.Context) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{
+		"is_active":       true,
+		"submitted_at":    bson.M{"$exists": true},
+		"is_fully_graded": false,
+	})
+}
+
+// FindRecentSubmitted: N attempt terbaru yang SUDAH disubmit (submitted_at
+// tidak nil), dipakai untuk feed activityLog on-the-fly di dashboard Admin.
+func (r *AssessmentAttemptRepository) FindRecentSubmitted(ctx context.Context, limit int64) ([]model.AssessmentAttempt, error) {
+	opts := options.Find().SetSort(bson.D{{Key: "submitted_at", Value: -1}}).SetLimit(limit)
+	cursor, err := r.collection.Find(ctx, bson.M{
+		"is_active":    true,
+		"submitted_at": bson.M{"$exists": true},
+	}, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var attempts []model.AssessmentAttempt
+	if err := cursor.All(ctx, &attempts); err != nil {
+		return nil, err
+	}
+	return attempts, nil
+}
+
 func (r *AssessmentAttemptRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.AssessmentAttempt, error) {
 	var a model.AssessmentAttempt
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&a)

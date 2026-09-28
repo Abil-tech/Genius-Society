@@ -8,11 +8,8 @@ import (
 
 // Assignment merepresentasikan satu tugas dari guru untuk satu kelas.
 //
-// CATATAN: ClassID (bukan ClassIDs/array) — beda dari Material yang bisa
-// multi-kelas. Spec tidak menyebutkan tugas bisa diberikan ke beberapa
-// kelas sekaligus (section 6), jadi saya buat single-class. Kalau
-// ternyata dibutuhkan multi-kelas juga, beri tahu saya — perlu diubah ke
-// []primitive.ObjectID dan disesuaikan juga index & query-nya.
+// CATATAN: ClassIDs ([]primitive.ObjectID) — Assignment dapat ditugaskan
+// ke beberapa kelas sekaligus.
 //
 // AllowResubmit TIDAK ada di level Assignment ini — sesuai keputusan
 // Anda, opsi resubmit ditentukan per submission (lihat
@@ -23,8 +20,8 @@ type Assignment struct {
 	Title       string             `bson:"title" json:"title"`
 	Description string             `bson:"description" json:"description"`
 	SubjectID   primitive.ObjectID `bson:"subject_id" json:"subjectId"`
-	TeacherID   primitive.ObjectID `bson:"teacher_id" json:"teacherId"`
-	ClassID     primitive.ObjectID `bson:"class_id" json:"classId"`
+	TeacherID   primitive.ObjectID   `bson:"teacher_id" json:"teacherId"`
+	ClassIDs    []primitive.ObjectID `bson:"class_ids" json:"classIds"`
 
 	Deadline time.Time `bson:"deadline" json:"deadline"`
 

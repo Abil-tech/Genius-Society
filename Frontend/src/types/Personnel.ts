@@ -19,6 +19,7 @@ export type PersonnelType = 'guru' | 'staf'
 export type PersonnelStatus = 'aktif' | 'nonaktif'
 
 export interface Personnel {
+  id: string
   nip: string
   name: string
   email: string

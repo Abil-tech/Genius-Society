@@ -1,6 +1,15 @@
 import { Search, Bell, ChevronDown, ShieldCheck } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
 
-export default function AdminTopbar() {
+interface AdminTopbarProps {
+  searchPlaceholder?: string
+}
+
+export default function AdminTopbar({
+  searchPlaceholder = 'Cari data siswa, guru, kelas atau log...',
+}: AdminTopbarProps) {
+  const { user } = useAuth()
+
   return (
     <header className="flex items-center justify-between gap-4 border-b border-brand-navy/5 bg-white px-6 py-3.5">
       <div className="hidden font-mono text-[11px] font-semibold uppercase tracking-widest text-brand-muted sm:block">
@@ -15,7 +24,7 @@ export default function AdminTopbar() {
         />
         <input
           type="text"
-          placeholder="Cari data siswa, guru, kelas atau log..."
+          placeholder={searchPlaceholder}
           className="w-full rounded-lg border border-brand-navy/10 bg-brand-bg py-2 pl-10 pr-16 text-sm text-brand-navy placeholder:text-brand-muted outline-none focus:border-brand-orange"
         />
         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[10px] text-brand-muted">
@@ -33,11 +42,11 @@ export default function AdminTopbar() {
 
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-navy font-mono text-xs font-bold text-white">
-            A
+            {user?.name?.charAt(0).toUpperCase() ?? 'A'}
           </span>
           <div className="hidden text-left sm:block">
             <p className="flex items-center gap-1 text-xs font-bold text-brand-navy">
-              Administrator
+              {user?.name ?? 'Administrator'}
               <ShieldCheck size={11} className="text-brand-orange" />
             </p>
           </div>

@@ -4,26 +4,28 @@ import (
 	"net/http"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/dto"
+	"github.com/Abil-tech/Genius-Society/backend/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
-type AdminHandler struct{}
-
-func NewAdminHandler() *AdminHandler {
-	return &AdminHandler{}
+type AdminHandler struct {
+	dashboardService *service.DashboardService
 }
 
-// GetDashboard: khusus role Admin. Section 13 spec — Admin dashboard
-// menampilkan total siswa/guru/kelas/akun + statistik akademik yang
-// diizinkan. Angka masih placeholder sampai collection students/
-// teachers/classes selesai.
+// NewAdminHandler: SIGNATURE BERUBAH — sebelumnya NewAdminHandler() tanpa
+// parameter. Semua pemanggil (main.go) WAJIB di-update untuk mengoper
+// *service.DashboardService.
+func NewAdminHandler(dashboardService *service.DashboardService) *AdminHandler {
+	return &AdminHandler{dashboardService: dashboardService}
+}
+
+// GetDashboard: khusus role Admin. Sekarang mengambil data ASLI lewat
+// DashboardService (bukan placeholder hardcoded lagi).
 func (h *AdminHandler) GetDashboard(c *gin.Context) {
-	c.JSON(http.StatusOK, dto.Success(gin.H{
-		"stats": gin.H{
-			"totalStudents": 0,
-			"totalTeachers": 0,
-			"totalClasses":  0,
-			"totalAccounts": 0,
-		},
-	}))
+	data, err := h.dashboardService.GetAdminDashboard(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.Error("Gagal memuat data dashboard"))
+		return
+	}
+	c.JSON(http.StatusOK, dto.Success(data))
 }

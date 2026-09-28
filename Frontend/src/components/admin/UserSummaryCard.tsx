@@ -1,4 +1,5 @@
-import { userSummary } from '../../utils/dashboardContent'
+import { userSummary as fallbackData } from '../../utils/dashboardContent'
+import type { UserSummaryItem } from '../../types/Dashboard'
 
 const toneClass: Record<string, string> = {
   orange: 'bg-brand-orange',
@@ -6,8 +7,13 @@ const toneClass: Record<string, string> = {
   muted: 'bg-brand-navy/25',
 }
 
-export default function UserSummaryCard() {
-  const total = userSummary.reduce((sum, item) => sum + item.value, 0)
+interface UserSummaryCardProps {
+  data?: UserSummaryItem[]
+}
+
+export default function UserSummaryCard({ data = fallbackData }: UserSummaryCardProps) {
+  const summaryData = data && data.length > 0 ? data : fallbackData
+  const total = summaryData.reduce((sum, item) => sum + item.value, 0)
 
   return (
     <div className="rounded-2xl border border-brand-navy/5 bg-white p-5">
@@ -21,7 +27,7 @@ export default function UserSummaryCard() {
       </div>
 
       <div className="mt-4 space-y-3.5">
-        {userSummary.map((item) => (
+        {summaryData.map((item) => (
           <div key={item.label}>
             <div className="flex items-center justify-between text-xs">
               <span className="text-brand-muted">{item.label}</span>
@@ -31,7 +37,7 @@ export default function UserSummaryCard() {
             </div>
             <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-brand-bg">
               <div
-                className={`h-full rounded-full ${toneClass[item.tone]}`}
+                className={`h-full rounded-full ${toneClass[item.tone] || 'bg-brand-navy'}`}
                 style={{ width: `${item.percentage}%` }}
               />
             </div>

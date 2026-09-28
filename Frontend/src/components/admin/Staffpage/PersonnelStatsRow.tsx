@@ -1,9 +1,46 @@
-import { personnelStats } from '../../../utils/Staff/personnelContent'
+import { personnelStats as fallbackStats } from '../../../utils/Staff/personnelContent'
 
-export default function PersonnelStatsRow() {
+export interface PersonnelStats {
+  totalGuru: number
+  totalStaf: number
+  guruAktif: number
+  stafAktif: number
+  guruAktifRate: number
+  stafAktifRate: number
+}
+
+interface PersonnelStatsRowProps {
+  stats?: PersonnelStats | null
+}
+
+export default function PersonnelStatsRow({ stats }: PersonnelStatsRowProps) {
+  const cards = fallbackStats.map((stat) => {
+    if (!stats) return stat
+    switch (stat.code) {
+      case 'PERS_01':
+        return { ...stat, value: String(stats.totalGuru) }
+      case 'PERS_02':
+        return {
+          ...stat,
+          value: String(stats.guruAktif),
+          secondary: { value: `${stats.guruAktifRate}%`, label: 'Guru Aktif Mengajar' },
+        }
+      case 'PERS_03':
+        return { ...stat, value: String(stats.totalStaf) }
+      case 'PERS_04':
+        return {
+          ...stat,
+          value: String(stats.stafAktif),
+          secondary: { value: `${stats.stafAktifRate}%`, label: 'Tingkat Keaktifan Staf' },
+        }
+      default:
+        return stat
+    }
+  })
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {personnelStats.map((stat) => (
+      {cards.map((stat) => (
         <div
           key={stat.code}
           className={`rounded-2xl border bg-white p-5 ${

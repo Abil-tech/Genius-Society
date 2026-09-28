@@ -12,10 +12,11 @@ export interface AuthUser {
   email: string;
   role: Role;
   adminId?: string;
+  isWalas?: boolean;
 }
 
 export interface LoginPayload {
-  email: string;
+  username: string;
   password: string;
 }
 

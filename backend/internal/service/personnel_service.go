@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/dto"
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
 	"github.com/Abil-tech/Genius-Society/backend/internal/repository"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // avatarTones HARUS persis sama urutan/isinya dengan union type
@@ -171,6 +175,7 @@ func (s *PersonnelService) buildGuruEntry(ctx context.Context, u model.User, cur
 	}
 
 	return dto.PersonnelResponse{
+		ID:         u.ID.Hex(),
 		NIP:        nip,
 		Name:       u.Name,
 		Email:      u.Email,
@@ -199,6 +204,7 @@ func (s *PersonnelService) buildStafEntry(u model.User) dto.PersonnelResponse {
 	}
 
 	return dto.PersonnelResponse{
+		ID:         u.ID.Hex(),
 		NIP:        nip,
 		Name:       u.Name,
 		Email:      u.Email,
@@ -268,4 +274,174 @@ func pickAvatarTone(idHex string) string {
 
 func round1(v float64) float64 {
 	return float64(int(v*10+0.5)) / 10
+}
+
+func (s *PersonnelService) CreatePersonnel(ctx context.Context, req dto.CreatePersonnelRequest) (*dto.PersonnelResponse, error) {
+	// 1. Generate username via Counter
+	role := model.RoleGuru
+	if req.Role == "staf" || req.Role == "kurikulum" {
+		role = model.RoleKurikulum
+	} else if req.Role == "kepala_sekolah" {
+		role = model.RoleKepalaSekolah
+	}
+
+	counterKey := model.CounterKeyGuru
+	if role == model.RoleKurikulum {
+		counterKey = model.CounterKeyKurikulum
+	} else if role == model.RoleKepalaSekolah {
+		counterKey = model.CounterKeyKepalaSekolah
+	}
+
+	counterRepo := repository.NewCounterRepository(s.userRepo.Collection().Database())
+	username, err := counterRepo.NextUsername(ctx, counterKey)
+	if err != nil {
+		username = fmt.Sprintf("GS-%s-%d", strings.ToUpper(string(counterKey)), time.Now().Unix())
+	}
+
+	// 2. Hash default password "password123"
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("hash password: %w", err)
+	}
+
+	user := &model.User{
+		Name:         req.Name,
+		Email:        req.Email,
+		PasswordHash: string(passwordHash),
+		Role:         role,
+		Username:     &username,
+		IsActive:     req.Status != "nonaktif",
+	}
+
+	if err := s.userRepo.Create(ctx, user); err != nil {
+		return nil, fmt.Errorf("create user: %w", err)
+	}
+
+	nipVal := req.NIP
+	var nipPtr *string
+	if nipVal != "" {
+		nipPtr = &nipVal
+	}
+
+	if role == model.RoleGuru {
+		teacher := &model.Teacher{
+			UserID:   user.ID,
+			NIP:      nipPtr,
+			JoinDate: time.Now(),
+		}
+		if err := s.teacherRepo.Create(ctx, teacher); err != nil {
+			return nil, fmt.Errorf("create teacher profile: %w", err)
+		}
+	}
+
+	typeStr := "guru"
+	if role != model.RoleGuru {
+		typeStr = "staf"
+	}
+
+	nipDisplay := username
+	if nipPtr != nil {
+		nipDisplay = *nipPtr
+	}
+
+	roleLabel := req.Subject
+	if roleLabel == "" {
+		roleLabel = string(role)
+	}
+
+	return &dto.PersonnelResponse{
+		ID:         user.ID.Hex(),
+		NIP:        nipDisplay,
+		Name:       user.Name,
+		Email:      user.Email,
+		Initials:   buildInitials(user.Name),
+		AvatarTone: pickAvatarTone(user.ID.Hex()),
+		Type:       typeStr,
+		Role:       roleLabel,
+		Assignment: roleLabel,
+		Homeroom:   dto.PersonnelHomeroom{IsHomeroom: false},
+		Status:     statusLabel(user.IsActive),
+	}, nil
+}
+
+func (s *PersonnelService) UpdatePersonnel(ctx context.Context, idHex string, req dto.UpdatePersonnelRequest) (*dto.PersonnelResponse, error) {
+	id, err := primitive.ObjectIDFromHex(idHex)
+	if err != nil {
+		return nil, fmt.Errorf("invalid id: %w", err)
+	}
+
+	user, err := s.userRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("user not found: %w", err)
+	}
+
+	user.Name = req.Name
+	user.Email = req.Email
+	user.IsActive = req.Status != "nonaktif"
+	user.UpdatedAt = time.Now()
+
+	// Update user record
+	db := s.userRepo.Collection().Database()
+	_, err = db.Collection("users").UpdateOne(ctx,
+		bson.M{"_id": id},
+		bson.M{"$set": bson.M{
+			"name":      user.Name,
+			"email":     user.Email,
+			"is_active": user.IsActive,
+			"updatedAt": user.UpdatedAt,
+		}},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("update user: %w", err)
+	}
+
+	if user.Role == model.RoleGuru {
+		if teacher, err := s.teacherRepo.FindByUserID(ctx, id); err == nil {
+			var nipPtr *string
+			if req.NIP != "" {
+				nipPtr = &req.NIP
+			}
+			_ = s.teacherRepo.UpdateNIP(ctx, teacher.ID, nipPtr)
+		}
+	}
+
+	return &dto.PersonnelResponse{
+		ID:         user.ID.Hex(),
+		NIP:        req.NIP,
+		Name:       user.Name,
+		Email:      user.Email,
+		Initials:   buildInitials(user.Name),
+		AvatarTone: pickAvatarTone(user.ID.Hex()),
+		Type:       "guru",
+		Role:       req.Subject,
+		Assignment: req.Subject,
+		Homeroom:   dto.PersonnelHomeroom{IsHomeroom: false},
+		Status:     statusLabel(user.IsActive),
+	}, nil
+}
+
+func (s *PersonnelService) DeletePersonnel(ctx context.Context, idHex string) error {
+	id, err := primitive.ObjectIDFromHex(idHex)
+	if err != nil {
+		return fmt.Errorf("invalid id: %w", err)
+	}
+
+	db := s.userRepo.Collection().Database()
+	res, err := db.Collection("users").UpdateOne(ctx,
+		bson.M{"_id": id},
+		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},
+	)
+	if err != nil {
+		return err
+	}
+	if res.MatchedCount == 0 {
+		return repository.ErrUserNotFound
+	}
+
+	// Soft delete teacher profile if exists
+	if teacher, err := s.teacherRepo.FindByUserID(ctx, id); err == nil {
+		_ = s.teacherRepo.SoftDelete(ctx, teacher.ID)
+	}
+
+	return nil
 }

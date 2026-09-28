@@ -1,4 +1,5 @@
-import { statusRows } from '../../utils/dashboardContent'
+import { statusRows as fallbackData } from '../../utils/dashboardContent'
+import type { StatusRow } from '../../types/Dashboard'
 
 const barTone: Record<string, string> = {
   success: 'bg-status-success',
@@ -12,8 +13,13 @@ const badgeTone: Record<string, string> = {
   danger: 'bg-status-danger-bg text-status-danger',
 }
 
-export default function StatusTable() {
-  const total = statusRows.reduce((sum, row) => sum + row.count, 0)
+interface StatusTableProps {
+  data?: StatusRow[]
+}
+
+export default function StatusTable({ data = fallbackData }: StatusTableProps) {
+  const rows = data && data.length > 0 ? data : fallbackData
+  const total = rows.reduce((sum, row) => sum + row.count, 0)
 
   return (
     <div className="rounded-2xl border border-brand-navy/5 bg-white p-5">
@@ -43,7 +49,7 @@ export default function StatusTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-brand-navy/5">
-            {statusRows.map((row) => (
+            {rows.map((row) => (
               <tr key={row.category}>
                 <td className="py-3 pr-4 text-brand-navy">{row.category}</td>
                 <td className="py-3 pr-4 font-semibold text-brand-navy">
@@ -52,14 +58,14 @@ export default function StatusTable() {
                 <td className="py-3 pr-4">
                   <div className="h-1.5 w-28 overflow-hidden rounded-full bg-brand-bg">
                     <div
-                      className={`h-full rounded-full ${barTone[row.tone]}`}
+                      className={`h-full rounded-full ${barTone[row.tone] || 'bg-brand-orange'}`}
                       style={{ width: `${row.percentage}%` }}
                     />
                   </div>
                 </td>
                 <td className="py-3 pr-4">
                   <span
-                    className={`rounded-full px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wide ${badgeTone[row.tone]}`}
+                    className={`rounded-full px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wide ${badgeTone[row.tone] || 'bg-brand-bg text-brand-navy'}`}
                   >
                     {row.label}
                   </span>

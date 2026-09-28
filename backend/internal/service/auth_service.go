@@ -21,13 +21,11 @@ func NewAuthService(userRepo *repository.UserRepository) *AuthService {
 	return &AuthService{userRepo: userRepo}
 }
 
-// Login: jalur EMAIL, khusus role NON-admin (guru/murid/kurikulum/kepala_sekolah).
-// Admin/super_admin sengaja ditolak di sini walau email & password-nya benar —
-// mereka wajib lewat LoginAdmin (adminId). Ini keputusan desain eksplisit,
-// bukan bug: mencegah dua jalur otentikasi yang tumpang tindih untuk role
-// yang sama, yang akan mempersulit audit & rate-limiting per jalur nantinya.
-func (s *AuthService) Login(ctx context.Context, email, password string) (*model.User, error) {
-	user, err := s.userRepo.FindByEmail(ctx, email)
+// Login: jalur USERNAME, khusus role NON-admin (guru/murid/kurikulum/kepala_sekolah).
+// Admin/super_admin sengaja ditolak di sini walau username & password-nya benar —
+// mereka wajib lewat LoginAdmin (adminId).
+func (s *AuthService) Login(ctx context.Context, username, password string) (*model.User, error) {
+	user, err := s.userRepo.FindByUsername(ctx, username)
 	if err != nil {
 		if err == repository.ErrUserNotFound {
 			return nil, ErrInvalidCredentials
@@ -35,7 +33,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*model
 		return nil, err
 	}
 	if user.Role.IsAdminRole() {
-		return nil, ErrInvalidCredentials // pesan generik, jangan bocorkan "pakai jalur admin"
+		return nil, ErrInvalidCredentials
 	}
 	if !user.IsActive {
 		return nil, ErrAccountInactive

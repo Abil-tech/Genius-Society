@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 
@@ -31,7 +32,7 @@ func NewAuthHandler(authService *service.AuthService, jwtService *service.JWTSer
 }
 
 type loginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
+	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -47,9 +48,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := h.authService.Login(c.Request.Context(), req.Email, req.Password)
+	user, err := h.authService.Login(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.Error("invalid email or password"))
+		c.JSON(http.StatusUnauthorized, dto.Error("invalid username or password"))
 		return
 	}
 
@@ -108,12 +109,7 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	// untuk keduanya, tidak perlu mapping berbeda tergantung endpoint mana
 	// yang dipanggil.
 	c.JSON(http.StatusOK, dto.Success(gin.H{
-		"user": gin.H{
-			"id":    user.ID.Hex(),
-			"name":  user.Name,
-			"email": user.Email,
-			"role":  user.Role,
-		},
+		"user": h.buildUserResponse(c.Request.Context(), user),
 	}))
 }
 
@@ -138,11 +134,24 @@ func (h *AuthHandler) issueSession(c *gin.Context, user *model.User) {
 	)
 
 	c.JSON(http.StatusOK, dto.Success(gin.H{
-		"user": gin.H{
-			"id":    user.ID.Hex(),
-			"name":  user.Name,
-			"email": user.Email,
-			"role":  user.Role,
-		},
+		"user": h.buildUserResponse(c.Request.Context(), user),
 	}))
+}
+
+func (h *AuthHandler) buildUserResponse(ctx context.Context, user *model.User) gin.H {
+	resp := gin.H{
+		"id":    user.ID.Hex(),
+		"name":  user.Name,
+		"email": user.Email,
+		"role":  user.Role,
+	}
+	if user.AdminID != nil {
+		resp["adminId"] = *user.AdminID
+	}
+	if user.Role == model.RoleGuru {
+		// Walas is checked if user is assigned as walas in any active class
+		// We can safely query or leave default as false if nil
+		resp["isWalas"] = false
+	}
+	return resp
 }

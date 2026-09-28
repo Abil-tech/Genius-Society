@@ -12,9 +12,18 @@ const avatarTone: Record<Personnel['avatarTone'], string> = {
 interface PersonnelTableProps {
   data: Personnel[]
   total: number
+  onView?: (personnel: Personnel) => void
+  onEdit?: (personnel: Personnel) => void
+  onDelete?: (personnel: Personnel) => void
 }
 
-export default function PersonnelTable({ data, total }: PersonnelTableProps) {
+export default function PersonnelTable({
+  data,
+  total,
+  onView,
+  onEdit,
+  onDelete,
+}: PersonnelTableProps) {
   return (
     <div className="rounded-2xl border border-brand-navy/5 bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -47,14 +56,14 @@ export default function PersonnelTable({ data, total }: PersonnelTableProps) {
           </thead>
           <tbody className="divide-y divide-brand-navy/5">
             {data.map((person) => (
-              <tr key={person.nip}>
+              <tr key={person.id || person.nip || person.email}>
                 <td className="py-3 pr-4 font-mono text-[11px] text-brand-muted">
-                  {person.nip}
+                  {person.nip || '-'}
                 </td>
                 <td className="py-3 pr-4">
                   <div className="flex items-center gap-2.5">
                     <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold ${avatarTone[person.avatarTone]}`}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold ${avatarTone[person.avatarTone] || 'bg-brand-bg text-brand-navy'}`}
                     >
                       {person.initials}
                     </span>
@@ -84,7 +93,7 @@ export default function PersonnelTable({ data, total }: PersonnelTableProps) {
                   <p className="text-xs text-brand-muted">{person.assignment}</p>
                 </td>
                 <td className="py-3 pr-4 text-xs">
-                  {person.homeroom.isHomeroom ? (
+                  {person.homeroom?.isHomeroom ? (
                     <span className="flex items-center gap-1 font-medium text-status-success">
                       <CheckCircle2 size={12} strokeWidth={2.5} />
                       Ya ({person.homeroom.className})
@@ -107,13 +116,25 @@ export default function PersonnelTable({ data, total }: PersonnelTableProps) {
                 </td>
                 <td className="py-3">
                   <div className="flex items-center justify-end gap-2 text-brand-muted">
-                    <button className="hover:text-brand-navy">
+                    <button
+                      onClick={() => onView?.(person)}
+                      title="Lihat Detail"
+                      className="rounded p-1 hover:bg-brand-bg hover:text-brand-navy"
+                    >
                       <Eye size={15} strokeWidth={2} />
                     </button>
-                    <button className="hover:text-brand-orange">
+                    <button
+                      onClick={() => onEdit?.(person)}
+                      title="Edit Personel"
+                      className="rounded p-1 hover:bg-brand-orange-light hover:text-brand-orange"
+                    >
                       <Pencil size={15} strokeWidth={2} />
                     </button>
-                    <button className="hover:text-status-danger">
+                    <button
+                      onClick={() => onDelete?.(person)}
+                      title="Hapus Personel"
+                      className="rounded p-1 hover:bg-status-danger-bg hover:text-status-danger"
+                    >
                       <Trash2 size={15} strokeWidth={2} />
                     </button>
                   </div>

@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // TeacherSubject menyatakan bahwa seorang guru KOMPETEN/berwenang mengajar
@@ -16,9 +16,9 @@ import (
 // di sini) tanpa sedang ditugaskan mengajar kelas manapun tahun ini (tidak
 // ada TeacherClass untuk kombinasi itu).
 type TeacherSubject struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	TeacherID primitive.ObjectID `bson:"teacher_id" json:"teacherId"`
-	SubjectID primitive.ObjectID `bson:"subject_id" json:"subjectId"`
+	ID        bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	TeacherID bson.ObjectID `bson:"teacher_id" json:"teacherId"`
+	SubjectID bson.ObjectID `bson:"subject_id" json:"subjectId"`
 
 	// IsPrimary: menandai mapel UTAMA guru ini (dipakai untuk tampilan
 	// singkat mis. kolom "role" di tabel Guru & Staf). Maksimal SATU

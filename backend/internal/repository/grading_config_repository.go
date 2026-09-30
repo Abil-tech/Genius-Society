@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrGradingConfigNotFound = errors.New("grading config not found")
@@ -36,7 +36,7 @@ func NewGradingConfigRepository(db *mongo.Database) *GradingConfigRepository {
 // belum punya konfigurasi kustom — pemanggil (service layer) WAJIB
 // menangani error ini dengan fallback ke Default*Weight di atas, BUKAN
 // meneruskan error tersebut sebagai kegagalan ke pengguna.
-func (r *GradingConfigRepository) FindBySubject(ctx context.Context, subjectID primitive.ObjectID) (*model.GradingConfig, error) {
+func (r *GradingConfigRepository) FindBySubject(ctx context.Context, subjectID bson.ObjectID) (*model.GradingConfig, error) {
 	var gc model.GradingConfig
 	err := r.collection.FindOne(ctx, bson.M{"subject_id": subjectID, "is_active": true}).Decode(&gc)
 	if err == mongo.ErrNoDocuments {
@@ -51,7 +51,7 @@ func (r *GradingConfigRepository) FindBySubject(ctx context.Context, subjectID p
 // Upsert membuat atau mengganti total konfigurasi bobot untuk satu subject.
 // Pemanggil WAJIB memvalidasi tugasWeight+utsWeight+uasWeight == 100
 // SEBELUM memanggil ini — repository tidak melakukan validasi tersebut.
-func (r *GradingConfigRepository) Upsert(ctx context.Context, subjectID primitive.ObjectID, tugasWeight, utsWeight, uasWeight float64) error {
+func (r *GradingConfigRepository) Upsert(ctx context.Context, subjectID bson.ObjectID, tugasWeight, utsWeight, uasWeight float64) error {
 	now := time.Now()
 	_, err := r.collection.UpdateOne(ctx,
 		bson.M{"subject_id": subjectID},
@@ -65,12 +65,12 @@ func (r *GradingConfigRepository) Upsert(ctx context.Context, subjectID primitiv
 			},
 			"$setOnInsert": bson.M{"createdAt": now},
 		},
-		options.Update().SetUpsert(true),
+		options.UpdateOne().SetUpsert(true),
 	)
 	return err
 }
 
-func (r *GradingConfigRepository) SoftDelete(ctx context.Context, subjectID primitive.ObjectID) error {
+func (r *GradingConfigRepository) SoftDelete(ctx context.Context, subjectID bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"subject_id": subjectID, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrClassNotFound = errors.New("class not found")
@@ -22,7 +22,7 @@ func NewClassRepository(db *mongo.Database) *ClassRepository {
 	return &ClassRepository{collection: db.Collection("classes")}
 }
 
-func (r *ClassRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.Class, error) {
+func (r *ClassRepository) FindByID(ctx context.Context, id bson.ObjectID) (*model.Class, error) {
 	var class model.Class
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&class)
 	if err == mongo.ErrNoDocuments {
@@ -35,7 +35,7 @@ func (r *ClassRepository) FindByID(ctx context.Context, id primitive.ObjectID) (
 }
 
 // FindByAcademicYear mengembalikan semua kelas aktif pada satu tahun ajaran.
-func (r *ClassRepository) FindByAcademicYear(ctx context.Context, academicYearID primitive.ObjectID) ([]model.Class, error) {
+func (r *ClassRepository) FindByAcademicYear(ctx context.Context, academicYearID bson.ObjectID) ([]model.Class, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{
 		"academic_year_id": academicYearID,
 		"is_active":        true,
@@ -71,7 +71,7 @@ func (r *ClassRepository) FindAll(ctx context.Context) ([]model.Class, error) {
 // pada tahun ajaran tertentu. Mengembalikan ErrClassNotFound kalau guru
 // ini bukan wali kelas manapun tahun ini — itu kondisi NORMAL (kebanyakan
 // guru bukan walas), bukan error yang perlu ditampilkan ke pengguna.
-func (r *ClassRepository) FindByWalasAndYear(ctx context.Context, teacherUserID, academicYearID primitive.ObjectID) (*model.Class, error) {
+func (r *ClassRepository) FindByWalasAndYear(ctx context.Context, teacherUserID, academicYearID bson.ObjectID) (*model.Class, error) {
 	var class model.Class
 	err := r.collection.FindOne(ctx, bson.M{
 		"walas_id":         teacherUserID,
@@ -97,14 +97,14 @@ func (r *ClassRepository) Create(ctx context.Context, class *model.Class) error 
 	if err != nil {
 		return err
 	}
-	class.ID = res.InsertedID.(primitive.ObjectID)
+	class.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
 // Update mengubah field yang boleh diubah setelah kelas dibuat: nama,
 // tingkat, dan kapasitas. Tidak termasuk academic_year_id (kelas tidak
 // dipindah antar tahun ajaran — buat kelas baru untuk tahun ajaran baru).
-func (r *ClassRepository) Update(ctx context.Context, id primitive.ObjectID, name string, gradeLevel model.GradeLevel, capacity int) error {
+func (r *ClassRepository) Update(ctx context.Context, id bson.ObjectID, name string, gradeLevel model.GradeLevel, capacity int) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{
@@ -126,7 +126,7 @@ func (r *ClassRepository) Update(ctx context.Context, id primitive.ObjectID, nam
 // SetWalas menetapkan atau mengganti wali kelas. teacherUserID bisa nil
 // untuk melepas walas dari kelas ini. Validasi bahwa teacherUserID memang
 // ber-role Guru WAJIB dilakukan di service layer sebelum memanggil ini.
-func (r *ClassRepository) SetWalas(ctx context.Context, classID primitive.ObjectID, teacherUserID *primitive.ObjectID) error {
+func (r *ClassRepository) SetWalas(ctx context.Context, classID bson.ObjectID, teacherUserID *bson.ObjectID) error {
 	var update bson.M
 	if teacherUserID == nil {
 		update = bson.M{"$unset": bson.M{"walas_id": ""}, "$set": bson.M{"updatedAt": time.Now()}}
@@ -144,7 +144,7 @@ func (r *ClassRepository) SetWalas(ctx context.Context, classID primitive.Object
 }
 
 // SoftDelete menonaktifkan kelas (is_active=false). Tidak menghapus dokumen.
-func (r *ClassRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *ClassRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

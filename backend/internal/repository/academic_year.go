@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var (
@@ -25,7 +24,7 @@ func NewAcademicYearRepository(db *mongo.Database) *AcademicYearRepository {
 	return &AcademicYearRepository{collection: db.Collection("academic_years")}
 }
 
-func (r *AcademicYearRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.AcademicYear, error) {
+func (r *AcademicYearRepository) FindByID(ctx context.Context, id bson.ObjectID) (*model.AcademicYear, error) {
 	var ay model.AcademicYear
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&ay)
 	if err == mongo.ErrNoDocuments {
@@ -80,7 +79,7 @@ func (r *AcademicYearRepository) Create(ctx context.Context, ay *model.AcademicY
 	if err != nil {
 		return err
 	}
-	ay.ID = res.InsertedID.(primitive.ObjectID)
+	ay.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
@@ -95,7 +94,7 @@ func (r *AcademicYearRepository) Create(ctx context.Context, ay *model.AcademicY
 // yang berbarengan bisa menghasilkan 0 atau 2 tahun ajaran current. Untuk
 // operasi admin yang jarang dan tidak konkuren dalam praktik, ini
 // acceptable risk — tapi harus didokumentasikan, bukan diam-diam diabaikan.
-func (r *AcademicYearRepository) SetCurrentAcademicYear(ctx context.Context, id primitive.ObjectID) error {
+func (r *AcademicYearRepository) SetCurrentAcademicYear(ctx context.Context, id bson.ObjectID) error {
 	now := time.Now()
 
 	if _, err := r.collection.UpdateMany(ctx,
@@ -124,7 +123,7 @@ func (r *AcademicYearRepository) SetCurrentAcademicYear(ctx context.Context, id 
 // ini bukan operasi atomik lintas semester tapi karena berada di satu
 // dokumen, MongoDB menjamin masing-masing $set diterapkan pada dokumen yang
 // sama secara konsisten (arrayFilters dalam satu UpdateOne call).
-func (r *AcademicYearRepository) SetCurrentSemester(ctx context.Context, academicYearID primitive.ObjectID, semesterName model.SemesterName) error {
+func (r *AcademicYearRepository) SetCurrentSemester(ctx context.Context, academicYearID bson.ObjectID, semesterName model.SemesterName) error {
 	now := time.Now()
 
 	// Langkah 1: unset is_current di semua elemen array semesters.
@@ -150,7 +149,7 @@ func (r *AcademicYearRepository) SetCurrentSemester(ctx context.Context, academi
 	return nil
 }
 
-func (r *AcademicYearRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *AcademicYearRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "is_current": false, "updatedAt": time.Now()}},

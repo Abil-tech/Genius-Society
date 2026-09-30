@@ -9,8 +9,8 @@ import (
 	"github.com/Abil-tech/Genius-Society/backend/internal/dto"
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
 	"github.com/Abil-tech/Genius-Society/backend/internal/repository"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -365,7 +365,7 @@ func (s *PersonnelService) CreatePersonnel(ctx context.Context, req dto.CreatePe
 }
 
 func (s *PersonnelService) UpdatePersonnel(ctx context.Context, idHex string, req dto.UpdatePersonnelRequest) (*dto.PersonnelResponse, error) {
-	id, err := primitive.ObjectIDFromHex(idHex)
+	id, err := bson.ObjectIDFromHex(idHex)
 	if err != nil {
 		return nil, fmt.Errorf("invalid id: %w", err)
 	}
@@ -421,7 +421,7 @@ func (s *PersonnelService) UpdatePersonnel(ctx context.Context, idHex string, re
 }
 
 func (s *PersonnelService) DeletePersonnel(ctx context.Context, idHex string) error {
-	id, err := primitive.ObjectIDFromHex(idHex)
+	id, err := bson.ObjectIDFromHex(idHex)
 	if err != nil {
 		return fmt.Errorf("invalid id: %w", err)
 	}

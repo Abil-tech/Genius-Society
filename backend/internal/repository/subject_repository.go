@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrSubjectNotFound = errors.New("subject not found")
@@ -23,7 +23,7 @@ func NewSubjectRepository(db *mongo.Database) *SubjectRepository {
 	return &SubjectRepository{collection: db.Collection("subjects")}
 }
 
-func (r *SubjectRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.Subject, error) {
+func (r *SubjectRepository) FindByID(ctx context.Context, id bson.ObjectID) (*model.Subject, error) {
 	var subject model.Subject
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&subject)
 	if err == mongo.ErrNoDocuments {
@@ -73,11 +73,11 @@ func (r *SubjectRepository) Create(ctx context.Context, subject *model.Subject) 
 	if err != nil {
 		return err
 	}
-	subject.ID = res.InsertedID.(primitive.ObjectID)
+	subject.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
-func (r *SubjectRepository) Update(ctx context.Context, id primitive.ObjectID, name string, code string) error {
+func (r *SubjectRepository) Update(ctx context.Context, id bson.ObjectID, name string, code string) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{
@@ -95,7 +95,7 @@ func (r *SubjectRepository) Update(ctx context.Context, id primitive.ObjectID, n
 	return nil
 }
 
-func (r *SubjectRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *SubjectRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

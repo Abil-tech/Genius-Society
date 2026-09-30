@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrMaterialNotFound = errors.New("material not found")
@@ -46,7 +46,7 @@ func (r *MaterialRepository) FindRecentCreated(ctx context.Context, limit int64)
 	return materials, nil
 }
 
-func (r *MaterialRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.Material, error) {
+func (r *MaterialRepository) FindByID(ctx context.Context, id bson.ObjectID) (*model.Material, error) {
 	var m model.Material
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&m)
 	if err == mongo.ErrNoDocuments {
@@ -60,7 +60,7 @@ func (r *MaterialRepository) FindByID(ctx context.Context, id primitive.ObjectID
 
 // FindByClassForStudent: materi yang SUDAH publish untuk suatu kelas.
 // Dipakai untuk tampilan murid — filter publish_date<=now WAJIB di sini.
-func (r *MaterialRepository) FindByClassForStudent(ctx context.Context, classID primitive.ObjectID) ([]model.Material, error) {
+func (r *MaterialRepository) FindByClassForStudent(ctx context.Context, classID bson.ObjectID) ([]model.Material, error) {
 	opts := options.Find().SetSort(bson.D{{Key: "publish_date", Value: -1}})
 	cursor, err := r.collection.Find(ctx, bson.M{
 		"class_ids":    classID,
@@ -81,7 +81,7 @@ func (r *MaterialRepository) FindByClassForStudent(ctx context.Context, classID 
 
 // FindByTeacher: SEMUA materi milik guru ini, termasuk draft (publish_date
 // di masa depan) — dipakai untuk tampilan guru mengelola materinya sendiri.
-func (r *MaterialRepository) FindByTeacher(ctx context.Context, teacherID primitive.ObjectID) ([]model.Material, error) {
+func (r *MaterialRepository) FindByTeacher(ctx context.Context, teacherID bson.ObjectID) ([]model.Material, error) {
 	opts := options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}})
 	cursor, err := r.collection.Find(ctx, bson.M{
 		"teacher_id": teacherID,
@@ -112,7 +112,7 @@ func (r *MaterialRepository) Create(ctx context.Context, m *model.Material) erro
 	if err != nil {
 		return err
 	}
-	m.ID = res.InsertedID.(primitive.ObjectID)
+	m.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
@@ -121,7 +121,7 @@ func (r *MaterialRepository) Create(ctx context.Context, m *model.Material) erro
 // pemanggil sebaiknya pakai method khusus (mis. UpdateFile) supaya jelas
 // kapan replace file lama di R2 harus terjadi (di service layer, dengan
 // urutan: upload file baru -> update DB -> hapus file lama di R2).
-func (r *MaterialRepository) Update(ctx context.Context, id primitive.ObjectID, title, description string, classIDs []primitive.ObjectID, publishDate time.Time) error {
+func (r *MaterialRepository) Update(ctx context.Context, id bson.ObjectID, title, description string, classIDs []bson.ObjectID, publishDate time.Time) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{
@@ -141,7 +141,7 @@ func (r *MaterialRepository) Update(ctx context.Context, id primitive.ObjectID, 
 	return nil
 }
 
-func (r *MaterialRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *MaterialRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

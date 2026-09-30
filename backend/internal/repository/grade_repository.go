@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrGradeNotFound = errors.New("grade not found")
@@ -22,7 +22,7 @@ func NewGradeRepository(db *mongo.Database) *GradeRepository {
 	return &GradeRepository{collection: db.Collection("grades")}
 }
 
-func (r *GradeRepository) FindOne(ctx context.Context, studentID, subjectID, classID, academicYearID primitive.ObjectID, semester model.SemesterName) (*model.Grade, error) {
+func (r *GradeRepository) FindOne(ctx context.Context, studentID, subjectID, classID, academicYearID bson.ObjectID, semester model.SemesterName) (*model.Grade, error) {
 	var g model.Grade
 	err := r.collection.FindOne(ctx, bson.M{
 		"student_id":       studentID,
@@ -43,7 +43,7 @@ func (r *GradeRepository) FindOne(ctx context.Context, studentID, subjectID, cla
 
 // FindByStudentAndYear: seluruh nilai (semua mapel) satu siswa pada satu
 // tahun ajaran — dipakai untuk rapor/dashboard murid.
-func (r *GradeRepository) FindByStudentAndYear(ctx context.Context, studentID, academicYearID primitive.ObjectID) ([]model.Grade, error) {
+func (r *GradeRepository) FindByStudentAndYear(ctx context.Context, studentID, academicYearID bson.ObjectID) ([]model.Grade, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{
 		"student_id":       studentID,
 		"academic_year_id": academicYearID,
@@ -63,7 +63,7 @@ func (r *GradeRepository) FindByStudentAndYear(ctx context.Context, studentID, a
 
 // FindByClassSubjectSemester: nilai SEMUA siswa di satu kelas untuk satu
 // mapel+semester — dasar untuk fitur Ranking (section 12).
-func (r *GradeRepository) FindByClassSubjectSemester(ctx context.Context, classID, subjectID, academicYearID primitive.ObjectID, semester model.SemesterName) ([]model.Grade, error) {
+func (r *GradeRepository) FindByClassSubjectSemester(ctx context.Context, classID, subjectID, academicYearID bson.ObjectID, semester model.SemesterName) ([]model.Grade, error) {
 	opts := options.Find().SetSort(bson.D{{Key: "final_score", Value: -1}})
 	cursor, err := r.collection.Find(ctx, bson.M{
 		"class_id":         classID,
@@ -90,7 +90,7 @@ func (r *GradeRepository) FindByClassSubjectSemester(ctx context.Context, classI
 // (UpsertTugasAssessmentAverage / UpsertUTSScore / UpsertUASScore) supaya
 // nama field bson terjamin benar oleh compiler, bukan oleh disiplin
 // pemanggil mengetik string dengan benar.
-func (r *GradeRepository) upsertField(ctx context.Context, studentID, subjectID, classID, academicYearID primitive.ObjectID, semester model.SemesterName, teacherID primitive.ObjectID, bsonField string, value float64) error {
+func (r *GradeRepository) upsertField(ctx context.Context, studentID, subjectID, classID, academicYearID bson.ObjectID, semester model.SemesterName, teacherID bson.ObjectID, bsonField string, value float64) error {
 	now := time.Now()
 	filter := bson.M{
 		"student_id":       studentID,
@@ -109,7 +109,7 @@ func (r *GradeRepository) upsertField(ctx context.Context, studentID, subjectID,
 			},
 			"$setOnInsert": bson.M{"createdAt": now},
 		},
-		options.Update().SetUpsert(true),
+		options.UpdateOne().SetUpsert(true),
 	)
 	return err
 }
@@ -119,15 +119,15 @@ func (r *GradeRepository) upsertField(ctx context.Context, studentID, subjectID,
 // membuat dokumen baru kalau belum ada. FinalScore SENGAJA tidak diisi di
 // sini — itu tugas RecomputeFinalScore, dipanggil terpisah setelah
 // komponen yang relevan selesai di-update.
-func (r *GradeRepository) UpsertTugasAssessmentAverage(ctx context.Context, studentID, subjectID, classID, academicYearID primitive.ObjectID, semester model.SemesterName, teacherID primitive.ObjectID, value float64) error {
+func (r *GradeRepository) UpsertTugasAssessmentAverage(ctx context.Context, studentID, subjectID, classID, academicYearID bson.ObjectID, semester model.SemesterName, teacherID bson.ObjectID, value float64) error {
 	return r.upsertField(ctx, studentID, subjectID, classID, academicYearID, semester, teacherID, "tugas_assessment_average", value)
 }
 
-func (r *GradeRepository) UpsertUTSScore(ctx context.Context, studentID, subjectID, classID, academicYearID primitive.ObjectID, semester model.SemesterName, teacherID primitive.ObjectID, value float64) error {
+func (r *GradeRepository) UpsertUTSScore(ctx context.Context, studentID, subjectID, classID, academicYearID bson.ObjectID, semester model.SemesterName, teacherID bson.ObjectID, value float64) error {
 	return r.upsertField(ctx, studentID, subjectID, classID, academicYearID, semester, teacherID, "uts_score", value)
 }
 
-func (r *GradeRepository) UpsertUASScore(ctx context.Context, studentID, subjectID, classID, academicYearID primitive.ObjectID, semester model.SemesterName, teacherID primitive.ObjectID, value float64) error {
+func (r *GradeRepository) UpsertUASScore(ctx context.Context, studentID, subjectID, classID, academicYearID bson.ObjectID, semester model.SemesterName, teacherID bson.ObjectID, value float64) error {
 	return r.upsertField(ctx, studentID, subjectID, classID, academicYearID, semester, teacherID, "uas_score", value)
 }
 
@@ -136,7 +136,7 @@ func (r *GradeRepository) UpsertUASScore(ctx context.Context, studentID, subject
 // kebutuhan bobot) dan menyimpannya. Perhitungan bobot aktualnya dilakukan
 // di service layer (perlu tahu GradingConfig subject terkait) — method ini
 // hanya menyimpan hasil akhirnya.
-func (r *GradeRepository) RecomputeFinalScore(ctx context.Context, id primitive.ObjectID, finalScore float64) error {
+func (r *GradeRepository) RecomputeFinalScore(ctx context.Context, id bson.ObjectID, finalScore float64) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"final_score": finalScore, "updatedAt": time.Now()}},
@@ -150,7 +150,7 @@ func (r *GradeRepository) RecomputeFinalScore(ctx context.Context, id primitive.
 	return nil
 }
 
-func (r *GradeRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *GradeRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

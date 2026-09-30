@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrAssessmentAttemptNotFound = errors.New("assessment attempt not found")
@@ -62,7 +61,7 @@ func (r *AssessmentAttemptRepository) FindRecentSubmitted(ctx context.Context, l
 	return attempts, nil
 }
 
-func (r *AssessmentAttemptRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.AssessmentAttempt, error) {
+func (r *AssessmentAttemptRepository) FindByID(ctx context.Context, id bson.ObjectID) (*model.AssessmentAttempt, error) {
 	var a model.AssessmentAttempt
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&a)
 	if err == mongo.ErrNoDocuments {
@@ -74,7 +73,7 @@ func (r *AssessmentAttemptRepository) FindByID(ctx context.Context, id primitive
 	return &a, nil
 }
 
-func (r *AssessmentAttemptRepository) FindByAssessmentAndStudent(ctx context.Context, assessmentID, studentID primitive.ObjectID) (*model.AssessmentAttempt, error) {
+func (r *AssessmentAttemptRepository) FindByAssessmentAndStudent(ctx context.Context, assessmentID, studentID bson.ObjectID) (*model.AssessmentAttempt, error) {
 	var a model.AssessmentAttempt
 	err := r.collection.FindOne(ctx, bson.M{
 		"assessment_id": assessmentID,
@@ -92,7 +91,7 @@ func (r *AssessmentAttemptRepository) FindByAssessmentAndStudent(ctx context.Con
 
 // FindByAssessment: semua attempt untuk satu assessment (dipakai guru
 // untuk melihat siapa saja yang sudah mengerjakan & menilai essay).
-func (r *AssessmentAttemptRepository) FindByAssessment(ctx context.Context, assessmentID primitive.ObjectID) ([]model.AssessmentAttempt, error) {
+func (r *AssessmentAttemptRepository) FindByAssessment(ctx context.Context, assessmentID bson.ObjectID) ([]model.AssessmentAttempt, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{"assessment_id": assessmentID, "is_active": true})
 	if err != nil {
 		return nil, err
@@ -125,7 +124,7 @@ func (r *AssessmentAttemptRepository) StartAttempt(ctx context.Context, a *model
 	if err != nil {
 		return err
 	}
-	a.ID = res.InsertedID.(primitive.ObjectID)
+	a.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
@@ -134,7 +133,7 @@ func (r *AssessmentAttemptRepository) StartAttempt(ctx context.Context, a *model
 // isFullyGraded=true kalau assessment ini TIDAK punya soal essay sama
 // sekali (langsung final), false kalau masih ada essay yang menunggu
 // dinilai guru.
-func (r *AssessmentAttemptRepository) SubmitAttempt(ctx context.Context, id primitive.ObjectID, autoScore float64, isFullyGraded bool, finalScore *float64) error {
+func (r *AssessmentAttemptRepository) SubmitAttempt(ctx context.Context, id bson.ObjectID, autoScore float64, isFullyGraded bool, finalScore *float64) error {
 	now := time.Now()
 	update := bson.M{
 		"submitted_at":    now,
@@ -161,7 +160,7 @@ func (r *AssessmentAttemptRepository) SubmitAttempt(ctx context.Context, id prim
 // CompleteManualGrading dipanggil service layer SETELAH semua soal essay
 // di attempt ini selesai dinilai guru — mengisi ManualScore, FinalScore
 // (=AutoScore+ManualScore), dan menandai IsFullyGraded=true.
-func (r *AssessmentAttemptRepository) CompleteManualGrading(ctx context.Context, id primitive.ObjectID, manualScore, finalScore float64) error {
+func (r *AssessmentAttemptRepository) CompleteManualGrading(ctx context.Context, id bson.ObjectID, manualScore, finalScore float64) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{
@@ -180,7 +179,7 @@ func (r *AssessmentAttemptRepository) CompleteManualGrading(ctx context.Context,
 	return nil
 }
 
-func (r *AssessmentAttemptRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *AssessmentAttemptRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

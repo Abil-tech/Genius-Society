@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // FileMetadata adalah metadata file yang disimpan di Cloudflare R2 — BUKAN
@@ -27,14 +27,14 @@ type FileMetadata struct {
 // itu implisit lewat kelas mana saja yang ada di ClassIDs (setiap Class
 // sudah terikat ke satu academic_year_id).
 type Material struct {
-	ID primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ID bson.ObjectID `bson:"_id,omitempty" json:"id"`
 
 	Title       string             `bson:"title" json:"title"`
 	Description string             `bson:"description" json:"description"`
-	SubjectID   primitive.ObjectID `bson:"subject_id" json:"subjectId"`
-	TeacherID   primitive.ObjectID `bson:"teacher_id" json:"teacherId"`
+	SubjectID   bson.ObjectID `bson:"subject_id" json:"subjectId"`
+	TeacherID   bson.ObjectID `bson:"teacher_id" json:"teacherId"`
 
-	ClassIDs []primitive.ObjectID `bson:"class_ids" json:"classIds"`
+	ClassIDs []bson.ObjectID `bson:"class_ids" json:"classIds"`
 
 	File *FileMetadata `bson:"file,omitempty" json:"file,omitempty"`
 	Link *string       `bson:"link,omitempty" json:"link,omitempty"`

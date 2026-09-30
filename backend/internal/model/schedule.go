@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type DayOfWeek string
@@ -30,8 +30,8 @@ var ValidDaysOfWeek = map[DayOfWeek]bool{
 // diduplikasi di sini, harus di-resolve lewat teacher_classes untuk
 // menghindari data basi kalau penugasan mengajar berubah.
 type Schedule struct {
-	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	TeacherClassID primitive.ObjectID `bson:"teacher_class_id" json:"teacherClassId"`
+	ID             bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	TeacherClassID bson.ObjectID `bson:"teacher_class_id" json:"teacherClassId"`
 
 	Day DayOfWeek `bson:"day" json:"day"`
 

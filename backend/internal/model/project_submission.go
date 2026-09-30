@@ -3,16 +3,16 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // ProjectSubmission strukturnya identik dengan AssignmentSubmission
 // (SATU dokumen per (project, student); resubmit meng-update dokumen yang
 // sama, per keputusan Anda: sama seperti kebijakan assignment).
 type ProjectSubmission struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	ProjectID primitive.ObjectID `bson:"project_id" json:"projectId"`
-	StudentID primitive.ObjectID `bson:"student_id" json:"studentId"`
+	ID        bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	ProjectID bson.ObjectID `bson:"project_id" json:"projectId"`
+	StudentID bson.ObjectID `bson:"student_id" json:"studentId"`
 
 	File *FileMetadata `bson:"file,omitempty" json:"file,omitempty"`
 
@@ -25,7 +25,7 @@ type ProjectSubmission struct {
 	Score             *float64            `bson:"score,omitempty" json:"score,omitempty"`
 	Feedback          *string             `bson:"feedback,omitempty" json:"feedback,omitempty"`
 	GradedAt          *time.Time          `bson:"graded_at,omitempty" json:"gradedAt,omitempty"`
-	GradedByTeacherID *primitive.ObjectID `bson:"graded_by_teacher_id,omitempty" json:"gradedByTeacherId,omitempty"`
+	GradedByTeacherID *bson.ObjectID `bson:"graded_by_teacher_id,omitempty" json:"gradedByTeacherId,omitempty"`
 
 	// IsActive: soft-delete flag.
 	IsActive bool `bson:"is_active" json:"isActive"`

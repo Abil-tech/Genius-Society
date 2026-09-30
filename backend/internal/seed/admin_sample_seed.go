@@ -6,7 +6,7 @@ import (
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
 	"github.com/Abil-tech/Genius-Society/backend/internal/repository"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
 

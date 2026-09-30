@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // LandingContent is a singleton document (there is only ever one row in
@@ -49,12 +49,12 @@ type LandingFooter struct {
 }
 
 type LandingContent struct {
-	ID        primitive.ObjectID  `bson:"_id,omitempty" json:"-"`
+	ID        bson.ObjectID  `bson:"_id,omitempty" json:"-"`
 	Navbar    LandingNavbar       `bson:"navbar" json:"navbar"`
 	Hero      LandingHero         `bson:"hero" json:"hero"`
 	Stats     []LandingStat       `bson:"stats" json:"stats"`
 	Features  LandingFeatures     `bson:"features" json:"features"`
 	Footer    LandingFooter       `bson:"footer" json:"footer"`
 	UpdatedAt time.Time           `bson:"updatedAt" json:"-"`
-	UpdatedBy *primitive.ObjectID `bson:"updatedBy,omitempty" json:"-"`
+	UpdatedBy *bson.ObjectID `bson:"updatedBy,omitempty" json:"-"`
 }

@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // Grade adalah SATU dokumen nilai untuk kombinasi
@@ -28,13 +28,13 @@ import (
 // dinilai guru, dst). Repository ini TIDAK melakukan agregasi lintas
 // collection — itu tanggung jawab service layer.
 type Grade struct {
-	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	StudentID      primitive.ObjectID `bson:"student_id" json:"studentId"`
-	SubjectID      primitive.ObjectID `bson:"subject_id" json:"subjectId"`
-	ClassID        primitive.ObjectID `bson:"class_id" json:"classId"`
-	AcademicYearID primitive.ObjectID `bson:"academic_year_id" json:"academicYearId"`
+	ID             bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	StudentID      bson.ObjectID `bson:"student_id" json:"studentId"`
+	SubjectID      bson.ObjectID `bson:"subject_id" json:"subjectId"`
+	ClassID        bson.ObjectID `bson:"class_id" json:"classId"`
+	AcademicYearID bson.ObjectID `bson:"academic_year_id" json:"academicYearId"`
 	Semester       SemesterName       `bson:"semester" json:"semester"`
-	TeacherID      primitive.ObjectID `bson:"teacher_id" json:"teacherId"`
+	TeacherID      bson.ObjectID `bson:"teacher_id" json:"teacherId"`
 
 	TugasAssessmentAverage *float64 `bson:"tugas_assessment_average,omitempty" json:"tugasAssessmentAverage,omitempty"`
 	UTSScore               *float64 `bson:"uts_score,omitempty" json:"utsScore,omitempty"`

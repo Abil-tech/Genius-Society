@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrAssignmentNotFound = errors.New("assignment not found")
@@ -59,7 +58,7 @@ func (r *AssignmentRepository) CountDeadlineWithin(ctx context.Context, from, to
 	})
 }
 
-func (r *AssignmentRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.Assignment, error) {
+func (r *AssignmentRepository) FindByID(ctx context.Context, id bson.ObjectID) (*model.Assignment, error) {
 	var a model.Assignment
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&a)
 	if err == mongo.ErrNoDocuments {
@@ -86,7 +85,7 @@ func (r *AssignmentRepository) FindAll(ctx context.Context) ([]model.Assignment,
 }
 
 // FindByClass: semua tugas untuk satu kelas (dipakai tampilan murid).
-func (r *AssignmentRepository) FindByClass(ctx context.Context, classID primitive.ObjectID) ([]model.Assignment, error) {
+func (r *AssignmentRepository) FindByClass(ctx context.Context, classID bson.ObjectID) ([]model.Assignment, error) {
 	opts := options.Find().SetSort(bson.D{{Key: "deadline", Value: 1}})
 	cursor, err := r.collection.Find(ctx, bson.M{"class_ids": classID, "is_active": true}, opts)
 	if err != nil {
@@ -102,7 +101,7 @@ func (r *AssignmentRepository) FindByClass(ctx context.Context, classID primitiv
 }
 
 // FindByTeacher: semua tugas yang dibuat guru ini (dipakai tampilan guru).
-func (r *AssignmentRepository) FindByTeacher(ctx context.Context, teacherID primitive.ObjectID) ([]model.Assignment, error) {
+func (r *AssignmentRepository) FindByTeacher(ctx context.Context, teacherID bson.ObjectID) ([]model.Assignment, error) {
 	opts := options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}})
 	cursor, err := r.collection.Find(ctx, bson.M{"teacher_id": teacherID, "is_active": true}, opts)
 	if err != nil {
@@ -127,11 +126,11 @@ func (r *AssignmentRepository) Create(ctx context.Context, a *model.Assignment) 
 	if err != nil {
 		return err
 	}
-	a.ID = res.InsertedID.(primitive.ObjectID)
+	a.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
-func (r *AssignmentRepository) Update(ctx context.Context, id primitive.ObjectID, title, description string, deadline time.Time) error {
+func (r *AssignmentRepository) Update(ctx context.Context, id bson.ObjectID, title, description string, deadline time.Time) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{
@@ -150,7 +149,7 @@ func (r *AssignmentRepository) Update(ctx context.Context, id primitive.ObjectID
 	return nil
 }
 
-func (r *AssignmentRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *AssignmentRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

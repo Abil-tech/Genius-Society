@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrTeacherSubjectNotFound = errors.New("teacher_subject record not found")
@@ -23,7 +23,7 @@ func NewTeacherSubjectRepository(db *mongo.Database) *TeacherSubjectRepository {
 }
 
 // FindByTeacher: daftar mapel yang guru ini kompeten mengajar.
-func (r *TeacherSubjectRepository) FindByTeacher(ctx context.Context, teacherID primitive.ObjectID) ([]model.TeacherSubject, error) {
+func (r *TeacherSubjectRepository) FindByTeacher(ctx context.Context, teacherID bson.ObjectID) ([]model.TeacherSubject, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{"teacher_id": teacherID, "is_active": true})
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (r *TeacherSubjectRepository) FindByTeacher(ctx context.Context, teacherID 
 // FindBySubject: daftar guru yang kompeten mengajar mapel ini (berguna saat
 // Kurikulum mau menugaskan guru ke suatu kelas untuk mapel tertentu —
 // tampilkan hanya guru yang qualified).
-func (r *TeacherSubjectRepository) FindBySubject(ctx context.Context, subjectID primitive.ObjectID) ([]model.TeacherSubject, error) {
+func (r *TeacherSubjectRepository) FindBySubject(ctx context.Context, subjectID bson.ObjectID) ([]model.TeacherSubject, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{"subject_id": subjectID, "is_active": true})
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (r *TeacherSubjectRepository) FindBySubject(ctx context.Context, subjectID 
 // ditandai (mis. baru saja ditambahkan kompetensinya, belum diset mana
 // yang utama) — pemanggil (service layer) harus punya fallback yang jelas
 // untuk kasus ini (mis. tampilkan mapel PERTAMA, atau tampilkan "-").
-func (r *TeacherSubjectRepository) FindPrimaryByTeacher(ctx context.Context, teacherID primitive.ObjectID) (*model.TeacherSubject, error) {
+func (r *TeacherSubjectRepository) FindPrimaryByTeacher(ctx context.Context, teacherID bson.ObjectID) (*model.TeacherSubject, error) {
 	var ts model.TeacherSubject
 	err := r.collection.FindOne(ctx, bson.M{
 		"teacher_id": teacherID,
@@ -80,7 +80,7 @@ func (r *TeacherSubjectRepository) FindPrimaryByTeacher(ctx context.Context, tea
 // Sama seperti AcademicYearRepository.SetCurrentAcademicYear — 2 operasi
 // terpisah, bukan transaksi atomik, dengan risiko race condition yang
 // sama (acceptable untuk operasi admin yang jarang & tidak konkuren).
-func (r *TeacherSubjectRepository) SetPrimarySubject(ctx context.Context, teacherID, subjectID primitive.ObjectID) error {
+func (r *TeacherSubjectRepository) SetPrimarySubject(ctx context.Context, teacherID, subjectID bson.ObjectID) error {
 	if _, err := r.collection.UpdateMany(ctx,
 		bson.M{"teacher_id": teacherID, "is_primary": true},
 		bson.M{"$set": bson.M{"is_primary": false}},
@@ -111,11 +111,11 @@ func (r *TeacherSubjectRepository) Create(ctx context.Context, ts *model.Teacher
 	if err != nil {
 		return err
 	}
-	ts.ID = res.InsertedID.(primitive.ObjectID)
+	ts.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
-func (r *TeacherSubjectRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *TeacherSubjectRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

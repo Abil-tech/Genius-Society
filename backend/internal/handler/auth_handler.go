@@ -10,7 +10,7 @@ import (
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
 	"github.com/Abil-tech/Genius-Society/backend/internal/service"
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 var adminIDPattern = regexp.MustCompile(`^ADM-\d{6}$`)
@@ -92,7 +92,7 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	claimsVal, _ := c.Get(middleware.UserContextKey)
 	claims := claimsVal.(*service.Claims)
 
-	userID, err := primitive.ObjectIDFromHex(claims.UserID)
+	userID, err := bson.ObjectIDFromHex(claims.UserID)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, dto.Error("invalid session"))
 		return

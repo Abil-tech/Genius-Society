@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // TeacherClass adalah penugasan mengajar AKTUAL: guru X mengajar mapel Y
@@ -18,11 +18,11 @@ import (
 // beri tahu saya — index-nya perlu diganti jadi unique pada tiga field itu
 // saja (tanpa teacher_id).
 type TeacherClass struct {
-	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	TeacherID      primitive.ObjectID `bson:"teacher_id" json:"teacherId"`
-	SubjectID      primitive.ObjectID `bson:"subject_id" json:"subjectId"`
-	ClassID        primitive.ObjectID `bson:"class_id" json:"classId"`
-	AcademicYearID primitive.ObjectID `bson:"academic_year_id" json:"academicYearId"`
+	ID             bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	TeacherID      bson.ObjectID `bson:"teacher_id" json:"teacherId"`
+	SubjectID      bson.ObjectID `bson:"subject_id" json:"subjectId"`
+	ClassID        bson.ObjectID `bson:"class_id" json:"classId"`
+	AcademicYearID bson.ObjectID `bson:"academic_year_id" json:"academicYearId"`
 
 	// IsActive: soft-delete flag.
 	IsActive bool `bson:"is_active" json:"isActive"`

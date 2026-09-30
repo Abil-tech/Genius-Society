@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // EnrollmentStatus adalah status BISNIS penempatan siswa di suatu kelas
@@ -28,10 +28,10 @@ var ValidEnrollmentStatuses = map[EnrollmentStatus]bool{
 // dari tahun ke tahun didapat dengan query berdasarkan StudentID, diurutkan
 // berdasarkan AcademicYearID/CreatedAt.
 type ClassStudent struct {
-	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	StudentID      primitive.ObjectID `bson:"student_id" json:"studentId"`
-	ClassID        primitive.ObjectID `bson:"class_id" json:"classId"`
-	AcademicYearID primitive.ObjectID `bson:"academic_year_id" json:"academicYearId"`
+	ID             bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	StudentID      bson.ObjectID `bson:"student_id" json:"studentId"`
+	ClassID        bson.ObjectID `bson:"class_id" json:"classId"`
+	AcademicYearID bson.ObjectID `bson:"academic_year_id" json:"academicYearId"`
 
 	// RollNumber: nomor absen siswa DI DALAM kelas ini pada tahun ajaran ini.
 	RollNumber int `bson:"roll_number" json:"rollNumber"`

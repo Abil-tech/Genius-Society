@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrClassStudentNotFound = errors.New("class_student record not found")
@@ -24,7 +24,7 @@ func NewClassStudentRepository(db *mongo.Database) *ClassStudentRepository {
 
 // FindByStudentAndYear: dipakai untuk tahu siswa ini ada di kelas mana pada
 // tahun ajaran tertentu (mis. saat murid login, tentukan kelasnya sekarang).
-func (r *ClassStudentRepository) FindByStudentAndYear(ctx context.Context, studentID, academicYearID primitive.ObjectID) (*model.ClassStudent, error) {
+func (r *ClassStudentRepository) FindByStudentAndYear(ctx context.Context, studentID, academicYearID bson.ObjectID) (*model.ClassStudent, error) {
 	var cs model.ClassStudent
 	err := r.collection.FindOne(ctx, bson.M{
 		"student_id":       studentID,
@@ -42,7 +42,7 @@ func (r *ClassStudentRepository) FindByStudentAndYear(ctx context.Context, stude
 
 // FindByClass: daftar siswa (junction record) di satu kelas pada tahun
 // ajaran tertentu, diurutkan berdasarkan roll_number.
-func (r *ClassStudentRepository) FindByClass(ctx context.Context, classID, academicYearID primitive.ObjectID) ([]model.ClassStudent, error) {
+func (r *ClassStudentRepository) FindByClass(ctx context.Context, classID, academicYearID bson.ObjectID) ([]model.ClassStudent, error) {
 	opts := options.Find().SetSort(bson.D{{Key: "roll_number", Value: 1}})
 	cursor, err := r.collection.Find(ctx, bson.M{
 		"class_id":         classID,
@@ -63,7 +63,7 @@ func (r *ClassStudentRepository) FindByClass(ctx context.Context, classID, acade
 
 // FindHistoryByStudent: seluruh riwayat penempatan kelas seorang siswa dari
 // tahun ke tahun.
-func (r *ClassStudentRepository) FindHistoryByStudent(ctx context.Context, studentID primitive.ObjectID) ([]model.ClassStudent, error) {
+func (r *ClassStudentRepository) FindHistoryByStudent(ctx context.Context, studentID bson.ObjectID) ([]model.ClassStudent, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{"student_id": studentID, "is_active": true})
 	if err != nil {
 		return nil, err
@@ -97,11 +97,11 @@ func (r *ClassStudentRepository) Create(ctx context.Context, cs *model.ClassStud
 	if err != nil {
 		return err
 	}
-	cs.ID = res.InsertedID.(primitive.ObjectID)
+	cs.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
-func (r *ClassStudentRepository) UpdateStatus(ctx context.Context, id primitive.ObjectID, status model.EnrollmentStatus) error {
+func (r *ClassStudentRepository) UpdateStatus(ctx context.Context, id bson.ObjectID, status model.EnrollmentStatus) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"status": status, "updatedAt": time.Now()}},
@@ -115,7 +115,7 @@ func (r *ClassStudentRepository) UpdateStatus(ctx context.Context, id primitive.
 	return nil
 }
 
-func (r *ClassStudentRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *ClassStudentRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

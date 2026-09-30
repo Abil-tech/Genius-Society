@@ -1,5 +1,5 @@
 import { PlusCircle } from 'lucide-react'
-import SegmentedBar from './SegmentBar'
+import SegmentedBar from './SegmentedBar'
 import type { GuruAssessmentsResponse } from '../../../types/Guru/guruAssessmentsResponse'
 
 interface Props {

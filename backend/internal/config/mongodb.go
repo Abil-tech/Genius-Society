@@ -6,9 +6,9 @@ import (
 	"log"
 	"time"
 
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
 // MongoClient wraps the mongo client and the resolved database handle.
@@ -32,12 +32,12 @@ func ConnectMongo(cfg *Config) (*MongoClient, error) {
 		return nil, fmt.Errorf("MONGODB_DATABASE is not set")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+	// NOTE: v2 mongo.Connect no longer accepts context.Context.
+	// The driver's connector does not consume a context, so the
+	// parameter was removed in v2. Connectivity is verified via Ping below.
 	clientOpts := options.Client().ApplyURI(cfg.MongoURI)
 
-	client, err := mongo.Connect(ctx, clientOpts)
+	client, err := mongo.Connect(clientOpts)          // ← ctx DIHAPUS
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to mongodb: %w", err)
 	}

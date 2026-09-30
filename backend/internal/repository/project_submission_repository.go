@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var (
@@ -25,7 +25,7 @@ func NewProjectSubmissionRepository(db *mongo.Database) *ProjectSubmissionReposi
 	return &ProjectSubmissionRepository{collection: db.Collection("project_submissions")}
 }
 
-func (r *ProjectSubmissionRepository) FindByProjectAndStudent(ctx context.Context, projectID, studentID primitive.ObjectID) (*model.ProjectSubmission, error) {
+func (r *ProjectSubmissionRepository) FindByProjectAndStudent(ctx context.Context, projectID, studentID bson.ObjectID) (*model.ProjectSubmission, error) {
 	var s model.ProjectSubmission
 	err := r.collection.FindOne(ctx, bson.M{
 		"project_id": projectID,
@@ -41,7 +41,7 @@ func (r *ProjectSubmissionRepository) FindByProjectAndStudent(ctx context.Contex
 	return &s, nil
 }
 
-func (r *ProjectSubmissionRepository) FindByProject(ctx context.Context, projectID primitive.ObjectID) ([]model.ProjectSubmission, error) {
+func (r *ProjectSubmissionRepository) FindByProject(ctx context.Context, projectID bson.ObjectID) ([]model.ProjectSubmission, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{"project_id": projectID, "is_active": true})
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (r *ProjectSubmissionRepository) FindByProject(ctx context.Context, project
 	return submissions, nil
 }
 
-func (r *ProjectSubmissionRepository) FindByStudent(ctx context.Context, studentID primitive.ObjectID) ([]model.ProjectSubmission, error) {
+func (r *ProjectSubmissionRepository) FindByStudent(ctx context.Context, studentID bson.ObjectID) ([]model.ProjectSubmission, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{"student_id": studentID, "is_active": true})
 	if err != nil {
 		return nil, err
@@ -81,13 +81,13 @@ func (r *ProjectSubmissionRepository) Create(ctx context.Context, s *model.Proje
 	if err != nil {
 		return err
 	}
-	s.ID = res.InsertedID.(primitive.ObjectID)
+	s.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
 // Resubmit: lihat penjelasan detail di AssignmentSubmissionRepository.Resubmit
 // — perilakunya identik.
-func (r *ProjectSubmissionRepository) Resubmit(ctx context.Context, id primitive.ObjectID, file model.FileMetadata, submittedAt time.Time, isLate bool) error {
+func (r *ProjectSubmissionRepository) Resubmit(ctx context.Context, id bson.ObjectID, file model.FileMetadata, submittedAt time.Time, isLate bool) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true, "allow_resubmit": true},
 		bson.M{
@@ -116,7 +116,7 @@ func (r *ProjectSubmissionRepository) Resubmit(ctx context.Context, id primitive
 	return nil
 }
 
-func (r *ProjectSubmissionRepository) SetAllowResubmit(ctx context.Context, id primitive.ObjectID, allow bool) error {
+func (r *ProjectSubmissionRepository) SetAllowResubmit(ctx context.Context, id bson.ObjectID, allow bool) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"allow_resubmit": allow, "updatedAt": time.Now()}},
@@ -130,7 +130,7 @@ func (r *ProjectSubmissionRepository) SetAllowResubmit(ctx context.Context, id p
 	return nil
 }
 
-func (r *ProjectSubmissionRepository) GradeSubmission(ctx context.Context, id primitive.ObjectID, score float64, feedback string, gradedByTeacherID primitive.ObjectID) error {
+func (r *ProjectSubmissionRepository) GradeSubmission(ctx context.Context, id bson.ObjectID, score float64, feedback string, gradedByTeacherID bson.ObjectID) error {
 	now := time.Now()
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
@@ -151,7 +151,7 @@ func (r *ProjectSubmissionRepository) GradeSubmission(ctx context.Context, id pr
 	return nil
 }
 
-func (r *ProjectSubmissionRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *ProjectSubmissionRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

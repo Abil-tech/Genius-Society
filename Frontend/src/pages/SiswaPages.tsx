@@ -21,6 +21,7 @@ import ImportStudentModal from '../components/admin/students/ImportStudentModal'
 import { studentList, studentStatsCards } from '../utils/StudentContent'
 import { toCsv, downloadCsv } from '../utils/Csv'
 import type { Student, StudentFormValues } from '../types/Student'
+import { fetchClasses, type ClassResponse } from '../services/academicService'
 import {
   fetchStudentPage,
   createStudent,
@@ -61,15 +62,21 @@ export default function SiswaPage() {
   const [isImporting, setIsImporting] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const [backendClasses, setBackendClasses] = useState<ClassResponse[]>([])
+
   async function loadData() {
     setIsLoading(true)
     setIsError(false)
     try {
-      const res = await fetchStudentPage()
+      const [res, classRes] = await Promise.all([
+        fetchStudentPage(),
+        fetchClasses()
+      ])
       setStudents(res.students || [])
       if (res.stats) {
         setStatsState(res.stats)
       }
+      setBackendClasses(classRes.classes || [])
     } catch {
       setIsError(true)
     } finally {
@@ -82,16 +89,25 @@ export default function SiswaPage() {
   }, [])
 
   const classOptions = useMemo(
-    () => Array.from(new Set(students.map((s) => s.className))).filter(Boolean),
-    [students],
+    () => Array.from(new Set([
+      ...backendClasses.map((c) => c.name),
+      ...students.map((s) => s.className)
+    ])).filter(Boolean),
+    [backendClasses, students],
   )
   const majorOptions = useMemo(
-    () => Array.from(new Set(students.map((s) => s.major))).filter(Boolean),
-    [students],
+    () => Array.from(new Set([
+      ...backendClasses.map((c) => c.major),
+      ...students.map((s) => s.major)
+    ])).filter(Boolean),
+    [backendClasses, students],
   )
   const academicYearOptions = useMemo(
-    () => Array.from(new Set(students.map((s) => s.academicYear))),
-    [students],
+    () => Array.from(new Set([
+      ...backendClasses.map((c) => c.academic_year),
+      ...students.map((s) => s.academicYear)
+    ])).filter(Boolean),
+    [backendClasses, students],
   )
 
   const filtered = useMemo(() => {

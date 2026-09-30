@@ -15,6 +15,8 @@ import ManagementTugasPage from './pages/ManagementTugasPage'
 import GuruDashboardPage from './pages/Guru/GuruDashboard'
 import JadwalMengajarPage from './pages/Guru/JadwalMengajarPage'
 import GuruAssignmentTugas from './pages/Guru/GuruAssignmentTugas'
+import GuruAssessmentsPage from './pages/Guru/GuruAssessmentsPage'
+import CreateAssessmentPage from './pages/Guru/CreateAssessmentPage'
 
 // Komponen terpisah karena useNavigate() HARUS dipanggil oleh komponen
 // yang berada DI DALAM <BrowserRouter>, bukan yang me-render BrowserRouter
@@ -137,6 +139,24 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['guru']}>
                 <GuruAssignmentTugas />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/guru/assessment"
+            element={
+              <ProtectedRoute allowedRoles={['guru']}>
+                <GuruAssessmentsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/guru/assessment/new"
+            element={
+              <ProtectedRoute allowedRoles={['guru']}>
+                <CreateAssessmentPage />
               </ProtectedRoute>
             }
           />

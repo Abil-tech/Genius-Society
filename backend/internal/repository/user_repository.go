@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrUserNotFound = errors.New("user not found")
@@ -75,7 +75,7 @@ func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*
 // murid). Pemanggil WAJIB memvalidasi bahwa role pelaku perubahan adalah
 // admin/super_admin SEBELUM memanggil method ini — repository tidak tahu
 // dan tidak mengecek siapa yang memanggil.
-func (r *UserRepository) UpdateUsername(ctx context.Context, userID primitive.ObjectID, newUsername string) error {
+func (r *UserRepository) UpdateUsername(ctx context.Context, userID bson.ObjectID, newUsername string) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": userID, "is_active": true},
 		bson.M{"$set": bson.M{"username": newUsername, "updatedAt": time.Now()}},
@@ -179,7 +179,7 @@ func (r *UserRepository) EnsureIndexes(ctx context.Context) error {
 // ini sudah dinonaktifkan SETELAH token diterbitkan, method ini akan
 // menganggapnya ErrUserNotFound, supaya sesi lama tidak bisa dipulihkan
 // dengan data user yang sudah tidak berlaku lagi.
-func (r *UserRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.User, error) {
+func (r *UserRepository) FindByID(ctx context.Context, id bson.ObjectID) (*model.User, error) {
 	var user model.User
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&user)
 	if err == mongo.ErrNoDocuments {
@@ -205,7 +205,7 @@ func (r *UserRepository) Create(ctx context.Context, user *model.User) error {
 	if err != nil {
 		return err
 	}
-	user.ID = res.InsertedID.(primitive.ObjectID)
+	user.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 

@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // LoginEvent mencatat SATU kali user berhasil login. Ini log immutable —
@@ -12,8 +12,8 @@ import (
 // aktivitas). Dicatat otomatis oleh AuthHandler setiap issueSession
 // berhasil.
 type LoginEvent struct {
-	ID     primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	UserID primitive.ObjectID `bson:"user_id" json:"userId"`
+	ID     bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	UserID bson.ObjectID `bson:"user_id" json:"userId"`
 	Role   Role               `bson:"role" json:"role"`
 
 	CreatedAt time.Time `bson:"createdAt" json:"createdAt"`

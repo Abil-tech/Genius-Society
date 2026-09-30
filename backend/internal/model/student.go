@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type Gender string
@@ -27,8 +27,8 @@ var ValidGenders = map[Gender]bool{
 // bukan field langsung di Student, supaya riwayat kelas per tahun ajaran
 // tidak hilang begitu siswa naik/pindah kelas.
 type Student struct {
-	ID     primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	UserID primitive.ObjectID `bson:"user_id" json:"userId"`
+	ID     bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	UserID bson.ObjectID `bson:"user_id" json:"userId"`
 
 	DateOfBirth   time.Time `bson:"date_of_birth" json:"dateOfBirth"`
 	Gender        Gender    `bson:"gender" json:"gender"`

@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // GradingConfig menyimpan bobot komponen nilai untuk SATU mata pelajaran
@@ -14,8 +14,8 @@ import (
 // TugasAssessmentWeight + UTSWeight + UASWeight WAJIB = 100 — validasi ini
 // di service layer, model hanya menyimpan datanya.
 type GradingConfig struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	SubjectID primitive.ObjectID `bson:"subject_id" json:"subjectId"`
+	ID        bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	SubjectID bson.ObjectID `bson:"subject_id" json:"subjectId"`
 
 	TugasAssessmentWeight float64 `bson:"tugas_assessment_weight" json:"tugasAssessmentWeight"` // default 60
 	UTSWeight             float64 `bson:"uts_weight" json:"utsWeight"`                           // default 20

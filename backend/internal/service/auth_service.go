@@ -6,7 +6,7 @@ import (
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
 	"github.com/Abil-tech/Genius-Society/backend/internal/repository"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -71,7 +71,7 @@ func (s *AuthService) LoginAdmin(ctx context.Context, adminID, password string) 
 // (ErrInvalidCredentials) — bukan error server, supaya handler bisa
 // merespons 401 dan frontend tahu harus anggap belum login, bukan
 // menampilkan pesan error teknis ke pengguna.
-func (s *AuthService) GetUserByID(ctx context.Context, userID primitive.ObjectID) (*model.User, error) {
+func (s *AuthService) GetUserByID(ctx context.Context, userID bson.ObjectID) (*model.User, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		if err == repository.ErrUserNotFound {

@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrStudentNotFound = errors.New("student not found")
@@ -22,7 +22,7 @@ func NewStudentRepository(db *mongo.Database) *StudentRepository {
 	return &StudentRepository{collection: db.Collection("students")}
 }
 
-func (r *StudentRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.Student, error) {
+func (r *StudentRepository) FindByID(ctx context.Context, id bson.ObjectID) (*model.Student, error) {
 	var student model.Student
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&student)
 	if err == mongo.ErrNoDocuments {
@@ -35,7 +35,7 @@ func (r *StudentRepository) FindByID(ctx context.Context, id primitive.ObjectID)
 }
 
 // FindByUserID mengambil profil student berdasarkan reference ke users._id.
-func (r *StudentRepository) FindByUserID(ctx context.Context, userID primitive.ObjectID) (*model.Student, error) {
+func (r *StudentRepository) FindByUserID(ctx context.Context, userID bson.ObjectID) (*model.Student, error) {
 	var student model.Student
 	err := r.collection.FindOne(ctx, bson.M{"user_id": userID, "is_active": true}).Decode(&student)
 	if err == mongo.ErrNoDocuments {
@@ -60,11 +60,11 @@ func (r *StudentRepository) Create(ctx context.Context, student *model.Student) 
 	if err != nil {
 		return err
 	}
-	student.ID = res.InsertedID.(primitive.ObjectID)
+	student.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
-func (r *StudentRepository) Update(ctx context.Context, id primitive.ObjectID, dateOfBirth time.Time, gender model.Gender) error {
+func (r *StudentRepository) Update(ctx context.Context, id bson.ObjectID, dateOfBirth time.Time, gender model.Gender) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{
@@ -82,7 +82,7 @@ func (r *StudentRepository) Update(ctx context.Context, id primitive.ObjectID, d
 	return nil
 }
 
-func (r *StudentRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *StudentRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

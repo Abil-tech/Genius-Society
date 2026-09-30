@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type LoginEventRepository struct {
@@ -22,7 +22,7 @@ func NewLoginEventRepository(db *mongo.Database) *LoginEventRepository {
 // issueSession berhasil. PENTING: kegagalan method ini TIDAK BOLEH
 // menggagalkan proses login — pemanggil harus treat error sebagai
 // non-fatal (log warning, tetap lanjutkan response login).
-func (r *LoginEventRepository) Record(ctx context.Context, userID primitive.ObjectID, role model.Role) error {
+func (r *LoginEventRepository) Record(ctx context.Context, userID bson.ObjectID, role model.Role) error {
 	_, err := r.collection.InsertOne(ctx, model.LoginEvent{
 		UserID:    userID,
 		Role:      role,

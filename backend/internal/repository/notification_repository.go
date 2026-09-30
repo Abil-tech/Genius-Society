@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrNotificationNotFound = errors.New("notification not found")
@@ -23,7 +23,7 @@ func NewNotificationRepository(db *mongo.Database) *NotificationRepository {
 }
 
 // FindByUser: daftar notifikasi milik satu user, terbaru dulu.
-func (r *NotificationRepository) FindByUser(ctx context.Context, userID primitive.ObjectID, onlyUnread bool) ([]model.Notification, error) {
+func (r *NotificationRepository) FindByUser(ctx context.Context, userID bson.ObjectID, onlyUnread bool) ([]model.Notification, error) {
 	filter := bson.M{"user_id": userID, "is_active": true}
 	if onlyUnread {
 		filter["is_read"] = false
@@ -43,7 +43,7 @@ func (r *NotificationRepository) FindByUser(ctx context.Context, userID primitiv
 }
 
 // CountUnread: dipakai untuk badge jumlah notifikasi belum dibaca.
-func (r *NotificationRepository) CountUnread(ctx context.Context, userID primitive.ObjectID) (int64, error) {
+func (r *NotificationRepository) CountUnread(ctx context.Context, userID bson.ObjectID) (int64, error) {
 	return r.collection.CountDocuments(ctx, bson.M{
 		"user_id":   userID,
 		"is_read":   false,
@@ -66,14 +66,14 @@ func (r *NotificationRepository) Create(ctx context.Context, n *model.Notificati
 	if err != nil {
 		return err
 	}
-	n.ID = res.InsertedID.(primitive.ObjectID)
+	n.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
 // MarkAsRead: tandai satu notifikasi sebagai sudah dibaca. Idempotent —
 // memanggil ini pada notifikasi yang sudah IsRead=true tidak error, cuma
 // tidak mengubah apa-apa secara efektif (ReadAt tidak diperbarui lagi).
-func (r *NotificationRepository) MarkAsRead(ctx context.Context, id, userID primitive.ObjectID) error {
+func (r *NotificationRepository) MarkAsRead(ctx context.Context, id, userID bson.ObjectID) error {
 	now := time.Now()
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "user_id": userID, "is_active": true, "is_read": false},
@@ -95,7 +95,7 @@ func (r *NotificationRepository) MarkAsRead(ctx context.Context, id, userID prim
 
 // MarkAllAsRead: tandai SEMUA notifikasi milik user ini sebagai dibaca
 // sekaligus.
-func (r *NotificationRepository) MarkAllAsRead(ctx context.Context, userID primitive.ObjectID) error {
+func (r *NotificationRepository) MarkAllAsRead(ctx context.Context, userID bson.ObjectID) error {
 	now := time.Now()
 	_, err := r.collection.UpdateMany(ctx,
 		bson.M{"user_id": userID, "is_active": true, "is_read": false},
@@ -104,7 +104,7 @@ func (r *NotificationRepository) MarkAllAsRead(ctx context.Context, userID primi
 	return err
 }
 
-func (r *NotificationRepository) SoftDelete(ctx context.Context, id, userID primitive.ObjectID) error {
+func (r *NotificationRepository) SoftDelete(ctx context.Context, id, userID bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "user_id": userID, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

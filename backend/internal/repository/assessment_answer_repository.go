@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrAssessmentAnswerNotFound = errors.New("assessment answer not found")
@@ -24,7 +23,7 @@ func NewAssessmentAnswerRepository(db *mongo.Database) *AssessmentAnswerReposito
 
 // FindByAttempt: semua jawaban dalam satu attempt (dipakai untuk review
 // hasil siswa maupun layar penilaian essay guru).
-func (r *AssessmentAnswerRepository) FindByAttempt(ctx context.Context, attemptID primitive.ObjectID) ([]model.AssessmentAnswer, error) {
+func (r *AssessmentAnswerRepository) FindByAttempt(ctx context.Context, attemptID bson.ObjectID) ([]model.AssessmentAnswer, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{"attempt_id": attemptID})
 	if err != nil {
 		return nil, err
@@ -43,7 +42,7 @@ func (r *AssessmentAnswerRepository) FindByAttempt(ctx context.Context, attemptI
 // Dipanggil dengan salah satu dari selectedOptionIndex ATAU essayText
 // terisi, sesuai tipe soalnya — validasi kecocokan tipe soal dilakukan di
 // service layer (repository ini tidak tahu AssessmentQuestion.Type).
-func (r *AssessmentAnswerRepository) UpsertAnswer(ctx context.Context, attemptID, questionID primitive.ObjectID, selectedOptionIndex *int, essayText *string) error {
+func (r *AssessmentAnswerRepository) UpsertAnswer(ctx context.Context, attemptID, questionID bson.ObjectID, selectedOptionIndex *int, essayText *string) error {
 	now := time.Now()
 	setFields := bson.M{"updatedAt": now}
 	if selectedOptionIndex != nil {
@@ -59,7 +58,7 @@ func (r *AssessmentAnswerRepository) UpsertAnswer(ctx context.Context, attemptID
 			"$set":         setFields,
 			"$setOnInsert": bson.M{"createdAt": now},
 		},
-		options.Update().SetUpsert(true),
+		options.UpdateOne().SetUpsert(true),
 	)
 	return err
 }
@@ -67,7 +66,7 @@ func (r *AssessmentAnswerRepository) UpsertAnswer(ctx context.Context, attemptID
 // SetAutoGrade dipanggil service layer saat submit, untuk soal
 // multiple_choice: mengisi IsCorrect & ScoreAwarded hasil perbandingan
 // otomatis terhadap AssessmentQuestion.CorrectOptionIndex.
-func (r *AssessmentAnswerRepository) SetAutoGrade(ctx context.Context, id primitive.ObjectID, isCorrect bool, scoreAwarded float64) error {
+func (r *AssessmentAnswerRepository) SetAutoGrade(ctx context.Context, id bson.ObjectID, isCorrect bool, scoreAwarded float64) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id},
 		bson.M{"$set": bson.M{
@@ -86,7 +85,7 @@ func (r *AssessmentAnswerRepository) SetAutoGrade(ctx context.Context, id primit
 }
 
 // GradeEssayAnswer dipanggil guru untuk menilai satu jawaban essay.
-func (r *AssessmentAnswerRepository) GradeEssayAnswer(ctx context.Context, id primitive.ObjectID, scoreAwarded float64, feedback string) error {
+func (r *AssessmentAnswerRepository) GradeEssayAnswer(ctx context.Context, id bson.ObjectID, scoreAwarded float64, feedback string) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id},
 		bson.M{"$set": bson.M{

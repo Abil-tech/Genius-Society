@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // AssignmentSubmission adalah SATU dokumen per (assignment, student) —
@@ -18,9 +18,9 @@ import (
 // field Status terpisah, supaya tidak ada dua sumber kebenaran yang bisa
 // tidak sinkron.
 type AssignmentSubmission struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	AssignmentID primitive.ObjectID `bson:"assignment_id" json:"assignmentId"`
-	StudentID    primitive.ObjectID `bson:"student_id" json:"studentId"`
+	ID           bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	AssignmentID bson.ObjectID `bson:"assignment_id" json:"assignmentId"`
+	StudentID    bson.ObjectID `bson:"student_id" json:"studentId"`
 
 	File *FileMetadata `bson:"file,omitempty" json:"file,omitempty"`
 
@@ -44,7 +44,7 @@ type AssignmentSubmission struct {
 	Score             *float64            `bson:"score,omitempty" json:"score,omitempty"`
 	Feedback          *string             `bson:"feedback,omitempty" json:"feedback,omitempty"`
 	GradedAt          *time.Time          `bson:"graded_at,omitempty" json:"gradedAt,omitempty"`
-	GradedByTeacherID *primitive.ObjectID `bson:"graded_by_teacher_id,omitempty" json:"gradedByTeacherId,omitempty"`
+	GradedByTeacherID *bson.ObjectID `bson:"graded_by_teacher_id,omitempty" json:"gradedByTeacherId,omitempty"`
 
 	// IsActive: soft-delete flag.
 	IsActive bool `bson:"is_active" json:"isActive"`

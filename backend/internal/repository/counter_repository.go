@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type CounterRepository struct {
@@ -29,15 +29,11 @@ func NewCounterRepository(db *mongo.Database) *CounterRepository {
 // dapat nilai yang sama.
 func (r *CounterRepository) nextSequence(ctx context.Context, key string) (int64, error) {
 	var result model.Counter
-	after := options.After
 	err := r.collection.FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": key},
 		bson.M{"$inc": bson.M{"seq": int64(1)}},
-		&options.FindOneAndUpdateOptions{
-			ReturnDocument: &after,
-			Upsert:         boolPtr(true),
-		},
+		options.FindOneAndUpdate().SetReturnDocument(options.After).SetUpsert(true),
 	).Decode(&result)
 	if err != nil {
 		return 0, err
@@ -56,7 +52,7 @@ func (r *CounterRepository) EnsureMinimum(ctx context.Context, key string, minVa
 	_, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": key},
 		bson.M{"$max": bson.M{"seq": minValue}},
-		options.Update().SetUpsert(true),
+		options.UpdateOne().SetUpsert(true),
 	)
 	return err
 }

@@ -36,7 +36,7 @@ export default function GuruAssessmentsPage() {
     loadData()
   }, [loadData])
 
-  const goCreate = () => navigate('/guru/assessment/new')
+  const goCreate = () => navigate('/guru/assessment/new ')
 
   async function handleReport() {
     setIsDownloading(true)

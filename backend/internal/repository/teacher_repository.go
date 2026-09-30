@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrTeacherNotFound = errors.New("teacher not found")
@@ -22,7 +22,7 @@ func NewTeacherRepository(db *mongo.Database) *TeacherRepository {
 	return &TeacherRepository{collection: db.Collection("teachers")}
 }
 
-func (r *TeacherRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*model.Teacher, error) {
+func (r *TeacherRepository) FindByID(ctx context.Context, id bson.ObjectID) (*model.Teacher, error) {
 	var teacher model.Teacher
 	err := r.collection.FindOne(ctx, bson.M{"_id": id, "is_active": true}).Decode(&teacher)
 	if err == mongo.ErrNoDocuments {
@@ -35,7 +35,7 @@ func (r *TeacherRepository) FindByID(ctx context.Context, id primitive.ObjectID)
 }
 
 // FindByUserID mengambil profil teacher berdasarkan reference ke users._id.
-func (r *TeacherRepository) FindByUserID(ctx context.Context, userID primitive.ObjectID) (*model.Teacher, error) {
+func (r *TeacherRepository) FindByUserID(ctx context.Context, userID bson.ObjectID) (*model.Teacher, error) {
 	var teacher model.Teacher
 	err := r.collection.FindOne(ctx, bson.M{"user_id": userID, "is_active": true}).Decode(&teacher)
 	if err == mongo.ErrNoDocuments {
@@ -60,13 +60,13 @@ func (r *TeacherRepository) Create(ctx context.Context, teacher *model.Teacher) 
 	if err != nil {
 		return err
 	}
-	teacher.ID = res.InsertedID.(primitive.ObjectID)
+	teacher.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
 // UpdateNIP mengubah NIP. nip=nil untuk menghapus NIP (mis. status
 // kepegawaian berubah).
-func (r *TeacherRepository) UpdateNIP(ctx context.Context, id primitive.ObjectID, nip *string) error {
+func (r *TeacherRepository) UpdateNIP(ctx context.Context, id bson.ObjectID, nip *string) error {
 	var update bson.M
 	if nip == nil {
 		update = bson.M{"$unset": bson.M{"nip": ""}, "$set": bson.M{"updatedAt": time.Now()}}
@@ -83,7 +83,7 @@ func (r *TeacherRepository) UpdateNIP(ctx context.Context, id primitive.ObjectID
 	return nil
 }
 
-func (r *TeacherRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *TeacherRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

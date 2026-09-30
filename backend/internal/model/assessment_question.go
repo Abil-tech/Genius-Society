@@ -1,7 +1,7 @@
 package model
 
 import (
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type QuestionType string
@@ -16,16 +16,16 @@ var ValidQuestionTypes = map[QuestionType]bool{
 	QuestionEssay:          true,
 }
 
-// QuestionOption adalah satu opsi jawaban pilihan ganda. Tidak punya _id
+// AssessmentOption adalah satu opsi jawaban pilihan ganda. Tidak punya _id
 // sendiri — diakses lewat posisi index-nya di dalam array Options.
-type QuestionOption struct {
+type AssessmentOption struct {
 	Text string `bson:"text" json:"text"`
 }
 
 // AssessmentQuestion adalah satu soal di dalam suatu Assessment.
 type AssessmentQuestion struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	AssessmentID primitive.ObjectID `bson:"assessment_id" json:"assessmentId"`
+	ID           bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	AssessmentID bson.ObjectID `bson:"assessment_id" json:"assessmentId"`
 
 	Type QuestionType `bson:"type" json:"type"`
 	Text string       `bson:"text" json:"text"`
@@ -36,7 +36,7 @@ type AssessmentQuestion struct {
 	Weight float64 `bson:"weight" json:"weight"`
 
 	// Options: HANYA diisi kalau Type == QuestionMultipleChoice.
-	Options []QuestionOption `bson:"options,omitempty" json:"options,omitempty"`
+	Options []AssessmentOption `bson:"options,omitempty" json:"options,omitempty"`
 
 	// CorrectOptionIndex: index jawaban benar di Options, HANYA diisi
 	// kalau Type == QuestionMultipleChoice.

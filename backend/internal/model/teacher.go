@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // Teacher adalah profil akademik tambahan untuk user ber-role guru.
@@ -16,8 +16,8 @@ import (
 // itu ditentukan lewat Class.WalasID (lihat model.Class), karena walas
 // adalah atribut dari suatu kelas, bukan dari guru secara umum.
 type Teacher struct {
-	ID     primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	UserID primitive.ObjectID `bson:"user_id" json:"userId"`
+	ID     bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	UserID bson.ObjectID `bson:"user_id" json:"userId"`
 
 	// NIP: Nomor Induk Pegawai, hanya berlaku untuk guru PNS. Pointer +
 	// opsional karena guru honorer/kontrak umumnya tidak punya NIP.

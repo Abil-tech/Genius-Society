@@ -2,8 +2,8 @@ package model
 
 import (
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // SemesterName membatasi nilai yang valid untuk Semester.Name.
@@ -36,7 +36,7 @@ type Semester struct {
 
 // AcademicYear merepresentasikan satu tahun ajaran (mis. "2025/2026").
 type AcademicYear struct {
-	ID primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ID bson.ObjectID `bson:"_id,omitempty" json:"id"`
 
 	// Name: label tahun ajaran, unique (mis. "2025/2026").
 	Name string `bson:"name" json:"name"`

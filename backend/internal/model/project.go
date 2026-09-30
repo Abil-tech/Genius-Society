@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // Project mirip Assignment, tapi punya field Instructions terpisah dari
@@ -12,14 +12,14 @@ import (
 // asli hanya sebut "File pendukung" untuk projek, beda dari materi. Kalau
 // ternyata Anda butuh Link juga di projek, beri tahu saya.
 type Project struct {
-	ID primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ID bson.ObjectID `bson:"_id,omitempty" json:"id"`
 
 	Title        string             `bson:"title" json:"title"`
 	Description  string             `bson:"description" json:"description"`
 	Instructions string             `bson:"instructions" json:"instructions"`
-	SubjectID    primitive.ObjectID `bson:"subject_id" json:"subjectId"`
-	TeacherID    primitive.ObjectID `bson:"teacher_id" json:"teacherId"`
-	ClassID      primitive.ObjectID `bson:"class_id" json:"classId"`
+	SubjectID    bson.ObjectID `bson:"subject_id" json:"subjectId"`
+	TeacherID    bson.ObjectID `bson:"teacher_id" json:"teacherId"`
+	ClassID      bson.ObjectID `bson:"class_id" json:"classId"`
 
 	Deadline time.Time `bson:"deadline" json:"deadline"`
 

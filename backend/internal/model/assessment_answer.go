@@ -3,15 +3,15 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // AssessmentAnswer adalah jawaban siswa untuk SATU soal di dalam SATU
 // attempt. Satu dokumen per (attempt_id, question_id).
 type AssessmentAnswer struct {
-	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	AttemptID  primitive.ObjectID `bson:"attempt_id" json:"attemptId"`
-	QuestionID primitive.ObjectID `bson:"question_id" json:"questionId"`
+	ID         bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	AttemptID  bson.ObjectID `bson:"attempt_id" json:"attemptId"`
+	QuestionID bson.ObjectID `bson:"question_id" json:"questionId"`
 
 	// SelectedOptionIndex: HANYA diisi kalau soal ini multiple_choice.
 	SelectedOptionIndex *int `bson:"selected_option_index,omitempty" json:"selectedOptionIndex,omitempty"`

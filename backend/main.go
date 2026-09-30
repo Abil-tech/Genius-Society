@@ -45,6 +45,8 @@ func main() {
 	assignmentRepo := repository.NewAssignmentRepository(mongoClient.Database)
 	assignmentSubmissionRepo := repository.NewAssignmentSubmissionRepository(mongoClient.Database)
 	assessmentRepo := repository.NewAssessmentRepository(mongoClient.Database)
+	assessmentQuestionRepo := repository.NewAssessmentQuestionRepository(mongoClient.Database)
+	assessmentAnswerRepo := repository.NewAssessmentAnswerRepository(mongoClient.Database)
 	assessmentAttemptRepo := repository.NewAssessmentAttemptRepository(mongoClient.Database)
 	projectRepo := repository.NewProjectRepository(mongoClient.Database)
 	loginEventRepo := repository.NewLoginEventRepository(mongoClient.Database)
@@ -66,6 +68,11 @@ func main() {
 		teacherRepo.EnsureIndexes,
 		teacherSubjectRepo.EnsureIndexes,
 		teacherClassRepo.EnsureIndexes,
+		assessmentRepo.EnsureIndexes,
+		assessmentQuestionRepo.EnsureIndexes,
+		assessmentAnswerRepo.EnsureIndexes,
+		assessmentAttemptRepo.EnsureIndexes,
+
 	} {
 		if err := ensureIdx(context.Background()); err != nil {
 			log.Fatalf("failed to create indexes: %v", err)
@@ -138,6 +145,16 @@ func main() {
 		academicYearRepo,
 	)
 
+	assessmentServiceGuru := service.NewAssessmentServiceGuru(
+		assessmentRepo,
+		assessmentQuestionRepo,
+		assessmentAnswerRepo,
+		assessmentAttemptRepo,
+		classRepo,
+		subjectRepo,
+		teacherRepo,
+	)
+
 	// --- Handler layer ---
 	publicLandingHandler := handler.NewPublicLandingHandler(landingRepo)
 	authHandler := handler.NewAuthHandler(authService, jwtService, cfg.CookieDomain, cfg.CookieSecure)
@@ -147,6 +164,7 @@ func main() {
 	studentHandler := handler.NewStudentHandler(studentService)
 	academicHandler := handler.NewAcademicHandler(academicService)
 	guruHandler := handler.NewGuruHandler(dashboardService)
+	assessmentHandlerGuru := handler.NewAssessmentHandlerGuru(assessmentServiceGuru)
 
 	// --- Router ---
 	router := gin.Default()
@@ -205,6 +223,22 @@ func main() {
 	)
 	{
 		guru.GET("/dashboard", guruHandler.GetDashboard)
+		guru.GET("/assignments", guruHandler.GetAssignments)
+		guru.GET("/assessments", assessmentHandlerGuru.GetMyAssessments)
+		guru.GET("/assessments/:id", assessmentHandlerGuru.GetAssessmentDetail)
+		guru.POST("/assessments", assessmentHandlerGuru.CreateAssessment)
+		guru.PUT("/assessments/:id", assessmentHandlerGuru.UpdateAssessment)
+		guru.DELETE("/assessments/:id", assessmentHandlerGuru.DeleteAssessment)
+		guru.GET("/assessments/:id/attempts-to-grade", assessmentHandlerGuru.GetAttemptsToGrade)
+
+		guru.GET("/classes", academicHandler.GetClasses)
+		guru.GET("/subjects", academicHandler.GetSubjects)
+
+		// Question management routes
+		guru.POST("/assessments/:id/questions", assessmentHandlerGuru.AddQuestion)
+		guru.PUT("/assessments/:id/questions/:qid", assessmentHandlerGuru.UpdateQuestion)
+		guru.DELETE("/assessments/:id/questions/:qid", assessmentHandlerGuru.DeleteQuestion)
+
 	}
 
 	// SUPER ADMIN routes — khusus role SuperAdmin, TIDAK termasuk Admin.

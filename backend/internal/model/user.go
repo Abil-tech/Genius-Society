@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type Role string
@@ -32,7 +32,7 @@ func (r Role) IsAdminRole() bool {
 }
 
 type User struct {
-	ID   primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ID   bson.ObjectID `bson:"_id,omitempty" json:"id"`
 	Name string             `bson:"name" json:"name"`
 
 	// Email: WAJIB diisi untuk SEMUA role (termasuk murid), tapi TIDAK

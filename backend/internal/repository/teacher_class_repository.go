@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var ErrTeacherClassNotFound = errors.New("teacher_class record not found")
@@ -24,7 +24,7 @@ func NewTeacherClassRepository(db *mongo.Database) *TeacherClassRepository {
 
 // FindByTeacherAndYear: daftar penugasan mengajar seorang guru pada satu
 // tahun ajaran (dipakai untuk "Jadwal Mengajar" / "Kelas yang Diajar" guru).
-func (r *TeacherClassRepository) FindByTeacherAndYear(ctx context.Context, teacherID, academicYearID primitive.ObjectID) ([]model.TeacherClass, error) {
+func (r *TeacherClassRepository) FindByTeacherAndYear(ctx context.Context, teacherID, academicYearID bson.ObjectID) ([]model.TeacherClass, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{
 		"teacher_id":       teacherID,
 		"academic_year_id": academicYearID,
@@ -45,7 +45,7 @@ func (r *TeacherClassRepository) FindByTeacherAndYear(ctx context.Context, teach
 // FindByClassSubjectYear: siapa saja guru yang mengajar mapel tertentu di
 // kelas tertentu pada tahun ajaran tertentu. Bisa lebih dari satu hasil
 // kalau co-teaching/guru pengganti diizinkan (lihat catatan di model).
-func (r *TeacherClassRepository) FindByClassSubjectYear(ctx context.Context, classID, subjectID, academicYearID primitive.ObjectID) ([]model.TeacherClass, error) {
+func (r *TeacherClassRepository) FindByClassSubjectYear(ctx context.Context, classID, subjectID, academicYearID bson.ObjectID) ([]model.TeacherClass, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{
 		"class_id":         classID,
 		"subject_id":       subjectID,
@@ -79,11 +79,11 @@ func (r *TeacherClassRepository) Create(ctx context.Context, tc *model.TeacherCl
 	if err != nil {
 		return err
 	}
-	tc.ID = res.InsertedID.(primitive.ObjectID)
+	tc.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
-func (r *TeacherClassRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *TeacherClassRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

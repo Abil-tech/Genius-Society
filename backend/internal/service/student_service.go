@@ -8,8 +8,8 @@ import (
 	"github.com/Abil-tech/Genius-Society/backend/internal/dto"
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
 	"github.com/Abil-tech/Genius-Society/backend/internal/repository"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -236,7 +236,7 @@ func (s *StudentService) CreateStudent(ctx context.Context, req dto.CreateStuden
 }
 
 func (s *StudentService) UpdateStudent(ctx context.Context, idHex string, req dto.UpdateStudentRequest) (*dto.StudentResponse, error) {
-	id, err := primitive.ObjectIDFromHex(idHex)
+	id, err := bson.ObjectIDFromHex(idHex)
 	if err != nil {
 		return nil, fmt.Errorf("invalid id: %w", err)
 	}
@@ -290,7 +290,7 @@ func (s *StudentService) UpdateStudent(ctx context.Context, idHex string, req dt
 }
 
 func (s *StudentService) DeleteStudent(ctx context.Context, idHex string) error {
-	id, err := primitive.ObjectIDFromHex(idHex)
+	id, err := bson.ObjectIDFromHex(idHex)
 	if err != nil {
 		return fmt.Errorf("invalid id: %w", err)
 	}

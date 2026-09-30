@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var (
@@ -61,7 +61,7 @@ func (r *AssignmentSubmissionRepository) FindRecent(ctx context.Context, limit i
 	return submissions, nil
 }
 
-func (r *AssignmentSubmissionRepository) FindByAssignmentAndStudent(ctx context.Context, assignmentID, studentID primitive.ObjectID) (*model.AssignmentSubmission, error) {
+func (r *AssignmentSubmissionRepository) FindByAssignmentAndStudent(ctx context.Context, assignmentID, studentID bson.ObjectID) (*model.AssignmentSubmission, error) {
 	var s model.AssignmentSubmission
 	err := r.collection.FindOne(ctx, bson.M{
 		"assignment_id": assignmentID,
@@ -79,7 +79,7 @@ func (r *AssignmentSubmissionRepository) FindByAssignmentAndStudent(ctx context.
 
 // FindByAssignment: semua submission untuk satu tugas (dipakai guru untuk
 // melihat & menilai pengumpulan siswa).
-func (r *AssignmentSubmissionRepository) FindByAssignment(ctx context.Context, assignmentID primitive.ObjectID) ([]model.AssignmentSubmission, error) {
+func (r *AssignmentSubmissionRepository) FindByAssignment(ctx context.Context, assignmentID bson.ObjectID) ([]model.AssignmentSubmission, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{"assignment_id": assignmentID, "is_active": true})
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (r *AssignmentSubmissionRepository) FindByAssignment(ctx context.Context, a
 }
 
 // FindByStudent: semua submission milik satu siswa (dipakai dashboard murid).
-func (r *AssignmentSubmissionRepository) FindByStudent(ctx context.Context, studentID primitive.ObjectID) ([]model.AssignmentSubmission, error) {
+func (r *AssignmentSubmissionRepository) FindByStudent(ctx context.Context, studentID bson.ObjectID) ([]model.AssignmentSubmission, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{"student_id": studentID, "is_active": true})
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func (r *AssignmentSubmissionRepository) Create(ctx context.Context, s *model.As
 	if err != nil {
 		return err
 	}
-	s.ID = res.InsertedID.(primitive.ObjectID)
+	s.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }
 
@@ -136,7 +136,7 @@ func (r *AssignmentSubmissionRepository) Create(ctx context.Context, s *model.As
 // tersebut — kalau tidak, mengembalikan ErrResubmitNotAllowed. Ini
 // pengecekan di level database (filter query), bukan cuma di service
 // layer, supaya tidak ada race condition antara "cek izin" dan "resubmit".
-func (r *AssignmentSubmissionRepository) Resubmit(ctx context.Context, id primitive.ObjectID, file model.FileMetadata, submittedAt time.Time, isLate bool) error {
+func (r *AssignmentSubmissionRepository) Resubmit(ctx context.Context, id bson.ObjectID, file model.FileMetadata, submittedAt time.Time, isLate bool) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true, "allow_resubmit": true},
 		bson.M{
@@ -167,7 +167,7 @@ func (r *AssignmentSubmissionRepository) Resubmit(ctx context.Context, id primit
 
 // SetAllowResubmit: guru mengizinkan/mencabut izin resubmit untuk satu
 // submission tertentu.
-func (r *AssignmentSubmissionRepository) SetAllowResubmit(ctx context.Context, id primitive.ObjectID, allow bool) error {
+func (r *AssignmentSubmissionRepository) SetAllowResubmit(ctx context.Context, id bson.ObjectID, allow bool) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"allow_resubmit": allow, "updatedAt": time.Now()}},
@@ -182,7 +182,7 @@ func (r *AssignmentSubmissionRepository) SetAllowResubmit(ctx context.Context, i
 }
 
 // GradeSubmission mengisi nilai & feedback dari guru.
-func (r *AssignmentSubmissionRepository) GradeSubmission(ctx context.Context, id primitive.ObjectID, score float64, feedback string, gradedByTeacherID primitive.ObjectID) error {
+func (r *AssignmentSubmissionRepository) GradeSubmission(ctx context.Context, id bson.ObjectID, score float64, feedback string, gradedByTeacherID bson.ObjectID) error {
 	now := time.Now()
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
@@ -203,7 +203,7 @@ func (r *AssignmentSubmissionRepository) GradeSubmission(ctx context.Context, id
 	return nil
 }
 
-func (r *AssignmentSubmissionRepository) SoftDelete(ctx context.Context, id primitive.ObjectID) error {
+func (r *AssignmentSubmissionRepository) SoftDelete(ctx context.Context, id bson.ObjectID) error {
 	res, err := r.collection.UpdateOne(ctx,
 		bson.M{"_id": id, "is_active": true},
 		bson.M{"$set": bson.M{"is_active": false, "updatedAt": time.Now()}},

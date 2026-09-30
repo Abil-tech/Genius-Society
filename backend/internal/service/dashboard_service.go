@@ -595,3 +595,35 @@ func (s *DashboardService) GetGuruDashboard(ctx context.Context, userIDStr strin
 		HomeroomClass:      homeroomClass,
 	}, nil
 }
+
+func (s *DashboardService) GetGuruAssignments(ctx context.Context, userIDStr string, classID string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"summary": map[string]interface{}{
+			"ungradedCount":  12,
+			"efficiencyRate": 85,
+		},
+		"assignments": []map[string]interface{}{
+			{
+				"id":             "task-1",
+				"refId":          "TG-402",
+				"name":           "Praktik Dasar HTML",
+				"className":      "11 PPLG 1",
+				"dueDate":        time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+				"submittedCount": 24,
+				"totalStudents":  32,
+			},
+		},
+		"upcomingDeadlines": []map[string]interface{}{
+			{
+				"id":        "task-1",
+				"dueAt":     time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+				"title":     "Praktik Dasar HTML",
+				"className": "11 PPLG 1",
+			},
+		},
+		"classes": []map[string]interface{}{
+			{"id": "cls-1", "name": "11 PPLG 1"},
+			{"id": "cls-2", "name": "11 PPLG 2"},
+		},
+	}, nil
+}

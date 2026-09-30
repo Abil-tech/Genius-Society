@@ -3,25 +3,25 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // Assignment merepresentasikan satu tugas dari guru untuk satu kelas.
 //
-// CATATAN: ClassIDs ([]primitive.ObjectID) — Assignment dapat ditugaskan
+// CATATAN: ClassIDs ([]bson.ObjectID) — Assignment dapat ditugaskan
 // ke beberapa kelas sekaligus.
 //
 // AllowResubmit TIDAK ada di level Assignment ini — sesuai keputusan
 // Anda, opsi resubmit ditentukan per submission (lihat
 // AssignmentSubmission.AllowResubmit).
 type Assignment struct {
-	ID primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ID bson.ObjectID `bson:"_id,omitempty" json:"id"`
 
 	Title       string             `bson:"title" json:"title"`
 	Description string             `bson:"description" json:"description"`
-	SubjectID   primitive.ObjectID `bson:"subject_id" json:"subjectId"`
-	TeacherID   primitive.ObjectID   `bson:"teacher_id" json:"teacherId"`
-	ClassIDs    []primitive.ObjectID `bson:"class_ids" json:"classIds"`
+	SubjectID   bson.ObjectID `bson:"subject_id" json:"subjectId"`
+	TeacherID   bson.ObjectID   `bson:"teacher_id" json:"teacherId"`
+	ClassIDs    []bson.ObjectID `bson:"class_ids" json:"classIds"`
 
 	Deadline time.Time `bson:"deadline" json:"deadline"`
 

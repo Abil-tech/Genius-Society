@@ -32,3 +32,20 @@ func (h *GuruHandler) GetDashboard(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, dto.Success(data))
 }
+
+func (h *GuruHandler) GetAssignments(c *gin.Context) {
+	claimsVal, exists := c.Get(middleware.UserContextKey)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, dto.Error("unauthorized"))
+		return
+	}
+	claims := claimsVal.(*service.Claims)
+
+	classID := c.Query("classId")
+	data, err := h.dashboardService.GetGuruAssignments(c.Request.Context(), claims.UserID, classID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.Error("Gagal memuat data tugas guru"))
+		return
+	}
+	c.JSON(http.StatusOK, dto.Success(data))
+}

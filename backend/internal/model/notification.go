@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type NotificationType string
@@ -32,8 +32,8 @@ var ValidNotificationTypes = map[NotificationType]bool{
 // bukan satu dokumen dengan banyak UserID, supaya status read/unread bisa
 // berbeda per penerima.
 type Notification struct {
-	ID     primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	UserID primitive.ObjectID `bson:"user_id" json:"userId"`
+	ID     bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	UserID bson.ObjectID `bson:"user_id" json:"userId"`
 
 	Type    NotificationType `bson:"type" json:"type"`
 	Title   string           `bson:"title" json:"title"`

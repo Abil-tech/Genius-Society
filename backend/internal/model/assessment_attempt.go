@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // AssessmentAttempt merepresentasikan SATU kali siswa mengerjakan suatu
@@ -13,9 +13,9 @@ import (
 // kalau kebijakan MaxAttempts berubah jadi >1 nanti, struktur data sudah
 // siap; yang perlu diubah cuma index-nya.
 type AssessmentAttempt struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	AssessmentID  primitive.ObjectID `bson:"assessment_id" json:"assessmentId"`
-	StudentID     primitive.ObjectID `bson:"student_id" json:"studentId"`
+	ID            bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	AssessmentID  bson.ObjectID `bson:"assessment_id" json:"assessmentId"`
+	StudentID     bson.ObjectID `bson:"student_id" json:"studentId"`
 	AttemptNumber int                `bson:"attempt_number" json:"attemptNumber"`
 
 	StartedAt   time.Time  `bson:"started_at" json:"startedAt"`

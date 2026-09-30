@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/Abil-tech/Genius-Society/backend/internal/dto"
@@ -24,6 +25,7 @@ func NewAdminHandler(dashboardService *service.DashboardService) *AdminHandler {
 func (h *AdminHandler) GetDashboard(c *gin.Context) {
 	data, err := h.dashboardService.GetAdminDashboard(c.Request.Context())
 	if err != nil {
+		log.Printf("GetAdminDashboard error: %v", err)
 		c.JSON(http.StatusInternalServerError, dto.Error("Gagal memuat data dashboard"))
 		return
 	}
